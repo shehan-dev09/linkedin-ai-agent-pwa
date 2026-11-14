@@ -116,6 +116,27 @@ def save_post_record(
         return int(cursor.lastrowid)
 
 
+def update_draft_content(
+    post_id: int,
+    post_text: str,
+    image_url: str,
+    image_path: str
+) -> None:
+    """Update an existing draft's text and image when regenerated in the Studio."""
+    init_db()
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            UPDATE post_history
+            SET post_text = ?, image_url = ?, image_path = ?
+            WHERE id = ?
+            """,
+            (post_text, image_url, image_path, post_id)
+        )
+        conn.commit()
+
+
 def update_post_status(
     post_id: int,
     post_text: str,
@@ -133,6 +154,20 @@ def update_post_status(
             WHERE id = ?
         """, (post_text, status, linkedin_urn, now, post_id))
         conn.commit()
+
+
+def mark_post_published(
+    post_id: int,
+    post_text: str,
+    linkedin_urn: str = ""
+) -> None:
+    """Mark a post record as published in SQLite history."""
+    update_post_status(
+        post_id=post_id,
+        post_text=post_text,
+        status="published",
+        linkedin_urn=linkedin_urn
+    )
 
 
 def delete_post_record(post_id: int) -> bool:

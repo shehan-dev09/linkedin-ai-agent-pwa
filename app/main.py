@@ -1,21 +1,18 @@
+import os
 import json
 import asyncio
-from io import BytesIO
-from pathlib import Path
 from datetime import datetime
 from contextlib import asynccontextmanager
-from typing import List
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Query
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
-from PIL import Image, ImageOps
 
-from app.agent import run_agent_workflow
+from app.agent import run_agent_workflow, generate_linkedin_post, generate_creative_image
 from app.storage import (
     init_db,
-    save_post_record,
-    update_post_status,
+    update_draft_content,
+    mark_post_published,
     delete_post_record,
     delete_all_drafts,
     get_post_history,
@@ -25,16 +22,22 @@ from app.storage import (
 from app.scheduler import (
     load_scheduler_config,
     save_scheduler_config,
-    get_next_scheduled_slot,
-    get_slt_now,
-    scheduler_background_loop,
-    send_optional_ntfy_push
+    get_scheduler_status,
+    send_ntfy_push,
+    scheduler_background_loop
 )
+from app.linkedin_service import (
+    verify_linkedin_connection,
+    save_configured_token,
+    publish_to_linkedin
+)
+
+APP_VERSION = "1.5.0"
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Start SQLite database and the 4x/day Autonomous Peak-Time Scheduler on boot."""
+    """Initialize SQLite storage and start the 24/7 background scheduler task."""
     init_db()
     scheduler_task = asyncio.create_task(scheduler_background_loop())
     yield
@@ -43,75 +46,98 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="LinkedIn Autonomous AI Agent",
-    description="Human-in-the-Loop PWA for automated LinkedIn content creation",
-    version="1.4.0",
+    version=APP_VERSION,
     lifespan=lifespan
 )
 
-# Mount static directory for images and assets
+os.makedirs("static/generated_images", exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-DRAFT_FILE = Path("static/generated_images/latest_draft.json")
-PROFILE_FILE = Path("static/profile.json")
-AVATAR_FILE = Path("static/avatar.jpg")
+DRAFT_FILE_PATH = "static/generated_images/current_draft.json"
+PROFILE_FILE_PATH = "static/profile.json"
 
 DEFAULT_PROFILE = {
     "name": "Shehan Nadeesha",
     "headline": "AI/ML Engineer",
     "linkedin_url": "https://www.linkedin.com/in/shehan-nadeesha/",
-    "avatar_url": ""
+    "avatar_url": "/static/avatar.jpg"
 }
 
 
+def get_profile_data() -> dict:
+    if os.path.exists(PROFILE_FILE_PATH):
+        try:
+            with open(PROFILE_FILE_PATH, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                return {**DEFAULT_PROFILE, **data}
+        except Exception:
+            pass
+    return DEFAULT_PROFILE.copy()
+
+
 class PublishRequest(BaseModel):
-    post_text: str
-    image_path: str
     post_id: int | None = None
+    final_text: str
+
+
+class RegenerateRequest(BaseModel):
+    post_id: int | None = None
+    title: str
+    link: str
+    source: str
+    summary: str = ""
 
 
 class SchedulerUpdateRequest(BaseModel):
     enabled: bool
-    peak_times: List[str]
+    schedule_times: list[str]
     ntfy_topic: str = ""
 
 
-def get_profile_data() -> dict:
-    """Load saved LinkedIn profile metadata or return defaults."""
-    profile = DEFAULT_PROFILE.copy()
-    if PROFILE_FILE.exists():
-        try:
-            saved = json.loads(PROFILE_FILE.read_text(encoding="utf-8"))
-            profile.update(saved)
-        except Exception:
-            pass
-    if AVATAR_FILE.exists():
-        profile["avatar_url"] = f"/static/avatar.jpg?t={int(AVATAR_FILE.stat().st_mtime)}"
-    return profile
-
-
-def sync_latest_draft_file() -> dict | None:
-    """Keep latest_draft.json synchronized with the latest record in SQLite."""
-    latest = get_latest_post_record()
-    if latest:
-        DRAFT_FILE.parent.mkdir(parents=True, exist_ok=True)
-        DRAFT_FILE.write_text(json.dumps(latest, indent=2), encoding="utf-8")
-        return latest
-    else:
-        if DRAFT_FILE.exists():
-            DRAFT_FILE.unlink()
-        return None
+class LinkedInTokenRequest(BaseModel):
+    access_token: str
 
 
 @app.get("/")
 async def serve_pwa():
-    """Serve the main Progressive Web App interface."""
     return FileResponse("static/index.html")
+
+
+@app.get("/api/meta")
+async def get_app_meta():
+    """Returns application metadata including the current version."""
+    return {
+        "status": "success",
+        "version": APP_VERSION,
+        "short_version": f"v{'.'.join(APP_VERSION.split('.')[:2])}"
+    }
+
+
+@app.get("/api/linkedin/status")
+async def get_linkedin_status():
+    """Checks whether a valid LinkedIn Access Token is configured and active."""
+    status = await asyncio.to_thread(verify_linkedin_connection)
+    return {"status": "success", "linkedin": status}
+
+
+@app.post("/api/linkedin/token")
+async def update_linkedin_token(request: LinkedInTokenRequest):
+    """Saves a LinkedIn Access Token and immediately verifies it against LinkedIn API."""
+    token = request.access_token.strip()
+    save_configured_token(token)
+    status = await asyncio.to_thread(verify_linkedin_connection, token)
+    return {"status": "success", "linkedin": status}
 
 
 @app.get("/api/profile")
 async def get_profile():
-    """Return user's LinkedIn profile settings."""
-    return {"status": "success", "profile": get_profile_data()}
+    profile = get_profile_data()
+    has_custom_avatar = os.path.exists("static/avatar.jpg")
+    return {
+        "status": "success",
+        "profile": profile,
+        "has_custom_avatar": has_custom_avatar
+    }
 
 
 @app.post("/api/profile")
@@ -121,198 +147,236 @@ async def update_profile(
     linkedin_url: str = Form("https://www.linkedin.com/in/shehan-nadeesha/"),
     avatar: UploadFile | None = File(None)
 ):
-    """Save user's LinkedIn profile metadata and optional profile photo."""
-    try:
-        if avatar and avatar.filename:
-            raw_bytes = await avatar.read()
-            img = Image.open(BytesIO(raw_bytes)).convert("RGB")
-            img = ImageOps.fit(img, (400, 400), Image.Resampling.LANCZOS)
-            AVATAR_FILE.parent.mkdir(parents=True, exist_ok=True)
-            img.save(AVATAR_FILE, "JPEG", quality=92)
+    profile = get_profile_data()
+    profile["name"] = name.strip() or "Shehan Nadeesha"
+    profile["headline"] = headline.strip() or "AI/ML Engineer"
+    profile["linkedin_url"] = linkedin_url.strip() or "https://www.linkedin.com/in/shehan-nadeesha/"
 
-        profile_data = {
-            "name": name.strip() or "Shehan Nadeesha",
-            "headline": headline.strip() or "AI/ML Engineer",
-            "linkedin_url": linkedin_url.strip() or "https://www.linkedin.com/in/shehan-nadeesha/"
-        }
-        PROFILE_FILE.write_text(json.dumps(profile_data, indent=2), encoding="utf-8")
-        return {"status": "success", "profile": get_profile_data()}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    if avatar and avatar.filename:
+        content = await avatar.read()
+        if content:
+            with open("static/avatar.jpg", "wb") as f:
+                f.write(content)
+            profile["avatar_url"] = f"/static/avatar.jpg?t={int(datetime.now().timestamp())}"
+
+    with open(PROFILE_FILE_PATH, "w", encoding="utf-8") as f:
+        json.dump(profile, f, indent=2)
+
+    return {"status": "success", "profile": profile}
 
 
 @app.get("/api/scheduler")
-async def get_scheduler_status():
-    """Return current 4x/day Peak-Time Scheduler settings, next slot, and notifications."""
-    config = load_scheduler_config()
+async def get_scheduler():
     return {
         "status": "success",
-        "scheduler": {
-            **config,
-            "current_slt": get_slt_now().strftime("%H:%M SLT"),
-            "next_slot": get_next_scheduled_slot(config.get("peak_times", []))
-        },
-        "stats": get_agent_stats()
+        "scheduler": get_scheduler_status()
     }
 
 
 @app.post("/api/scheduler")
-async def update_scheduler_settings(req: SchedulerUpdateRequest):
-    """Save updated peak time slots and auto-pilot status."""
-    config = load_scheduler_config()
-    clean_times = sorted(list({t.strip() for t in req.peak_times if t.strip()}))
-    config["enabled"] = req.enabled
-    config["peak_times"] = clean_times
-    config["ntfy_topic"] = req.ntfy_topic.strip()
-    save_scheduler_config(config)
+async def update_scheduler(request: SchedulerUpdateRequest):
+    clean_times = []
+    for t in request.schedule_times:
+        t_str = t.strip()
+        if len(t_str) == 5 and ":" in t_str:
+            clean_times.append(t_str)
+
+    if not clean_times:
+        clean_times = ["08:30", "12:30", "17:30", "21:00"]
+
+    cfg = load_scheduler_config()
+    cfg["enabled"] = request.enabled
+    cfg["schedule_times"] = sorted(list(set(clean_times)))[:4]
+    cfg["ntfy_topic"] = request.ntfy_topic.strip()
+    save_scheduler_config(cfg)
 
     return {
         "status": "success",
-        "scheduler": {
-            **config,
-            "current_slt": get_slt_now().strftime("%H:%M SLT"),
-            "next_slot": get_next_scheduled_slot(clean_times)
-        }
+        "scheduler": get_scheduler_status()
     }
 
 
 @app.post("/api/scheduler/test-notification")
-async def trigger_test_notification():
-    """Send a test notification to verify PWA and optional ntfy.sh alerts."""
-    config = load_scheduler_config()
-    now_slt = get_slt_now()
-    test_notif = {
-        "notif_id": int(now_slt.timestamp()),
-        "post_id": 0,
-        "title": "⚡ LinkedIn AI Studio: Notification Active!",
-        "body": "Your 4x/day Peak-Hour Auto-Pilot is connected and ready to alert you.",
-        "image_url": "/static/avatar.jpg",
-        "created_at": now_slt.strftime("%Y-%m-%d %H:%M:%S SLT")
-    }
-    config["latest_notification"] = test_notif
-    save_scheduler_config(config)
-
-    if config.get("ntfy_topic"):
-        send_optional_ntfy_push(
-            title="Test Alert: 4x/Day Peak Auto-Pilot is Active!",
-            source="LinkedIn AI Studio",
-            ntfy_topic=config["ntfy_topic"]
+async def test_scheduler_notification():
+    cfg = load_scheduler_config()
+    topic = cfg.get("ntfy_topic", "").strip()
+    if topic:
+        await asyncio.to_thread(
+            send_ntfy_push,
+            topic,
+            "LinkedIn AI Studio: Test Alert",
+            "Your 4x/day Peak-Time LinkedIn AI Agent notifications are active!",
+            "http://127.0.0.1:8000"
         )
-
-    return {"status": "success", "notification": test_notif}
+    return {
+        "status": "success",
+        "message": "Test notification dispatched.",
+        "ntfy_sent": bool(topic)
+    }
 
 
 @app.get("/api/draft")
-async def get_latest_draft():
-    """Retrieve the currently active draft along with live agent stats."""
-    stats = get_agent_stats()
+async def get_current_draft():
     latest = get_latest_post_record()
     if latest:
-        return {"status": "ready", "draft": latest, "stats": stats}
-    return {"status": "empty", "draft": None, "stats": stats}
+        return {
+            "status": "success",
+            "data": {
+                "post_id": latest["id"],
+                "news": {
+                    "title": latest["title"],
+                    "source": latest["source"],
+                    "link": latest["link"],
+                    "summary": ""
+                },
+                "post_text": latest["post_text"],
+                "image_url": latest["image_url"],
+                "image_path": latest["image_path"],
+                "record_status": latest["status"]
+            },
+            "stats": get_agent_stats()
+        }
+
+    if os.path.exists(DRAFT_FILE_PATH):
+        with open(DRAFT_FILE_PATH, "r", encoding="utf-8") as f:
+            return {"status": "success", "data": json.load(f), "stats": get_agent_stats()}
+
+    return {"status": "empty", "data": None, "stats": get_agent_stats()}
 
 
 @app.get("/api/history")
-async def get_history(status: str | None = Query(None)):
-    """Return past generated/published posts with optional status filter."""
+async def fetch_history(status: str = Query("all", description="Filter by all, published, or draft")):
     return {
         "status": "success",
-        "stats": get_agent_stats(),
-        "history": get_post_history(status_filter=status, limit=100)
+        "history": get_post_history(status_filter=status, limit=100),
+        "stats": get_agent_stats()
     }
 
 
 @app.delete("/api/history/drafts/clear")
-async def clear_unwanted_drafts():
-    """Delete all unpublished drafts at once while keeping their topics marked as seen."""
-    deleted_count = delete_all_drafts()
-    next_draft = sync_latest_draft_file()
+async def clear_all_unpublished_drafts():
+    removed_count = delete_all_drafts()
+    if os.path.exists(DRAFT_FILE_PATH):
+        try:
+            os.remove(DRAFT_FILE_PATH)
+        except Exception:
+            pass
     return {
         "status": "success",
-        "deleted_count": deleted_count,
-        "next_draft": next_draft,
+        "removed_count": removed_count,
+        "latest": get_latest_post_record(),
         "stats": get_agent_stats()
     }
 
 
 @app.delete("/api/history/{post_id}")
-async def delete_single_post(post_id: int):
-    """Delete a specific draft or post by ID."""
-    removed = delete_post_record(post_id)
-    if not removed:
-        raise HTTPException(status_code=404, detail="Post not found")
-    next_draft = sync_latest_draft_file()
+async def remove_draft_post(post_id: int):
+    deleted = delete_post_record(post_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Post record not found in database.")
     return {
         "status": "success",
         "deleted_id": post_id,
-        "next_draft": next_draft,
+        "latest": get_latest_post_record(),
         "stats": get_agent_stats()
     }
 
 
 @app.post("/api/generate")
-@app.post("/api/regenerate")
-async def generate_new_draft():
-    """Trigger the AI Agent in a non-blocking thread to fetch a fresh unseen news item."""
+async def trigger_agent():
     try:
         result = await asyncio.to_thread(run_agent_workflow)
-        normalized_path = result["image_path"].replace("\\", "/")
-        image_url = f"/{normalized_path}?t={int(datetime.now().timestamp())}"
+        with open(DRAFT_FILE_PATH, "w", encoding="utf-8") as f:
+            json.dump(result, f, indent=2)
+        return {"status": "success", "data": result, "stats": get_agent_stats()}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
-        post_id = save_post_record(
-            title=result["news"]["title"],
-            source=result["news"]["source"],
-            link=result["news"]["link"],
-            post_text=result["post_text"],
-            image_url=image_url,
-            image_path=result["image_path"],
-            status="draft"
-        )
 
-        draft_data = {
-            "id": post_id,
-            "title": result["news"]["title"],
-            "source": result["news"]["source"],
-            "link": result["news"]["link"],
-            "published": result["news"].get("published", "Recent"),
-            "post_text": result["post_text"],
-            "image_prompt": result["image_prompt"],
+@app.post("/api/regenerate")
+async def regenerate_current_draft(request: RegenerateRequest):
+    try:
+        news_item = {
+            "title": request.title,
+            "link": request.link,
+            "source": request.source,
+            "summary": request.summary
+        }
+        post_text = await asyncio.to_thread(generate_linkedin_post, news_item)
+        image_path = await asyncio.to_thread(generate_creative_image, news_item["title"], news_item["source"])
+        timestamp = int(datetime.now().timestamp())
+        image_url = f"/{image_path.replace(os.sep, '/')}?t={timestamp}"
+
+        if request.post_id:
+            update_draft_content(request.post_id, post_text, image_url, image_path)
+
+        result = {
+            "post_id": request.post_id,
+            "news": news_item,
+            "post_text": post_text,
+            "image_path": image_path,
             "image_url": image_url,
-            "image_path": result["image_path"],
-            "status": "draft",
-            "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            "record_status": "draft"
         }
-
-        DRAFT_FILE.parent.mkdir(parents=True, exist_ok=True)
-        DRAFT_FILE.write_text(json.dumps(draft_data, indent=2), encoding="utf-8")
-
-        return {
-            "status": "success",
-            "draft": draft_data,
-            "stats": get_agent_stats()
-        }
+        with open(DRAFT_FILE_PATH, "w", encoding="utf-8") as f:
+            json.dump(result, f, indent=2)
+        return {"status": "success", "data": result, "stats": get_agent_stats()}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/api/publish")
-async def publish_to_linkedin(request: PublishRequest):
-    """Approve the post, update its status to 'published' in SQLite, and publish."""
-    if not request.post_text.strip():
-        raise HTTPException(status_code=400, detail="Post text cannot be empty")
+async def approve_and_publish(request: PublishRequest):
+    """
+    Publishes the approved draft (post copy + 1080x1080 Liquid Glass card)
+    to LinkedIn via the official REST API (or Sandbox Mode if unconfigured).
+    """
+    try:
+        target_id = request.post_id
+        image_path = None
 
-    if request.post_id:
-        update_post_status(
-            post_id=request.post_id,
-            post_text=request.post_text,
-            status="published"
+        # Resolve the target draft and its local image path
+        latest = get_latest_post_record()
+        if not target_id and latest:
+            target_id = latest["id"]
+
+        history_items = get_post_history(status_filter="all", limit=100)
+        for item in history_items:
+            if item["id"] == target_id:
+                image_path = item.get("image_path")
+                break
+
+        if not image_path and latest:
+            image_path = latest.get("image_path")
+
+        # Execute LinkedIn publish in worker thread
+        publish_result = await asyncio.to_thread(
+            publish_to_linkedin,
+            request.final_text,
+            image_path
         )
 
-    sync_latest_draft_file()
+        post_urn = publish_result.get("post_urn", f"urn:li:share:{int(datetime.now().timestamp())}")
 
-    return {
-        "status": "published",
-        "message": "Post approved and marked as Published in History!",
-        "stats": get_agent_stats(),
-        "published_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    }
+        if target_id:
+            mark_post_published(target_id, request.final_text, linkedin_urn=post_urn)
+
+        if os.path.exists(DRAFT_FILE_PATH):
+            with open(DRAFT_FILE_PATH, "r", encoding="utf-8") as f:
+                draft_data = json.load(f)
+            draft_data["post_text"] = request.final_text
+            draft_data["record_status"] = "published"
+            with open(DRAFT_FILE_PATH, "w", encoding="utf-8") as f:
+                json.dump(draft_data, f, indent=2)
+
+        return {
+            "status": "published",
+            "mode": publish_result.get("mode", "simulated"),
+            "post_urn": post_urn,
+            "post_url": publish_result.get("post_url"),
+            "message": publish_result.get("message", "Post published."),
+            "published_at": datetime.now().isoformat(),
+            "stats": get_agent_stats()
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

@@ -1,39 +1,40 @@
 <!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <title>LinkedIn Studio — Shehan Nadeesha</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AI Agent Studio — Shehan Nadeesha</title>
 
     <!-- iOS PWA Meta Tags -->
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="LI Studio" />
-    <link rel="manifest" href="/static/manifest.json" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="AI Agent">
+    <link rel="manifest" href="/static/manifest.json">
 
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- Inter & JetBrains Mono Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
         :root {
             color-scheme: dark;
         }
-        * {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            box-sizing: border-box;
-        }
-        .font-mono {
-            font-family: 'JetBrains Mono', monospace;
-        }
         body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             background-color: #09090b;
-            color: #f4f4f5;
-            margin: 0;
+            color: #fafafa;
             -webkit-tap-highlight-color: transparent;
         }
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .surface {
+            background-color: #111113;
+            border: 1px solid #222226;
+        }
+        .surface-elevated {
+            background-color: #18181b;
+            border: 1px solid #27272a;
+        }
+        /* Slim minimal dark scrollbar */
         ::-webkit-scrollbar {
             width: 5px;
             height: 5px;
@@ -48,1145 +49,1303 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #3f3f46;
         }
-        .studio-surface {
-            background-color: #111113;
-            border: 1px solid #222226;
-            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+        /* Native Dark Time Input Styling */
+        input[type="time"] {
+            color-scheme: dark;
         }
-        .linkedin-card {
-            background-color: #1b1f23;
-            border: 1px solid #2e343b;
-            box-shadow: 0 14px 40px rgba(0, 0, 0, 0.5);
+        input[type="time"]::-webkit-calendar-picker-indicator {
+            filter: invert(0.75);
+             opacity: 0.7;
+            cursor: pointer;
         }
-        .wrap-anywhere {
+        input[type="time"]::-webkit-calendar-picker-indicator:hover {
+            opacity: 1;
+        }
+        @keyframes pulse-subtle {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.45; }
+        }
+        .animate-SubtlePulse {
+            animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        .preview-body-text {
             overflow-wrap: anywhere;
             word-break: break-word;
         }
-        input[type="time"]::-webkit-calendar-picker-indicator {
-            filter: invert(0.7);
-            cursor: pointer;
-        }
     </style>
 </head>
-<body class="min-h-screen flex flex-col selection:bg-sky-500 selection:text-white">
+<body class="min-h-screen flex flex-col selection:bg-zinc-700 selection:text-white">
 
     <!-- Top Navigation Bar -->
-    <header class="sticky top-0 z-30 border-b border-zinc-800/80 bg-[#09090b]/90 backdrop-blur-xl">
-        <div class="max-w-[1540px] mx-auto px-4 sm:px-8 h-16 flex items-center justify-between gap-4">
-
-            <!-- Brand + View Switcher -->
+    <header class="sticky top-0 z-30 bg-[#09090b]/90 backdrop-blur-md border-b border-zinc-800/80">
+        <div class="max-w-[1540px] mx-auto px-4 sm:px-8 h-14 flex items-center justify-between gap-4">
+            <!-- Left: Brand & View Switcher -->
             <div class="flex items-center gap-6">
-                <div class="flex items-center gap-3">
-                    <div class="w-9 h-9 rounded-lg bg-[#0A66C2] flex items-center justify-center font-bold text-white text-lg shadow-inner">
-                        in
-                    </div>
-                    <div>
-                        <div class="flex items-center gap-2">
-                            <h1 class="text-sm font-semibold tracking-tight text-white">LinkedIn Studio</h1>
-                            <span class="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-zinc-900 text-zinc-400 border border-zinc-800 hidden sm:inline">
-                                AI/ML Pipeline
-                            </span>
-                        </div>
-                        <p class="text-xs text-zinc-400 hidden sm:block">Shehan Nadeesha • Autonomous Content Workbench</p>
-                    </div>
+                <div class="flex items-center gap-2.5">
+                    <div class="w-2 h-2 rounded-full bg-emerald-400"></div>
+                    <span class="font-semibold text-sm tracking-tight text-zinc-100">LINKEDIN AI STUDIO</span>
+                    <span id="appVersionBadge" class="mono text-[11px] text-zinc-400 bg-zinc-900 border border-zinc-800 px-1.5 py-0.5 rounded">v1.5</span>
                 </div>
 
-                <!-- Segmented Navigation Tabs -->
-                <nav class="flex items-center bg-[#121215] p-1 rounded-xl border border-zinc-800/90">
-                    <button id="tabStudioBtn" onclick="switchTab('studio')" class="px-3.5 py-1.5 rounded-lg text-xs font-medium bg-zinc-800 text-white shadow-sm transition flex items-center gap-2">
-                        <svg class="w-3.5 h-3.5 text-zinc-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                        </svg>
-                        <span>Studio</span>
+                <!-- Navigation Tabs -->
+                <nav class="flex items-center bg-zinc-900/90 p-0.5 rounded-lg border border-zinc-800/90">
+                    <button id="tabStudioBtn" onclick="switchMainTab('studio')" class="px-3 py-1 rounded-md text-xs font-medium transition bg-zinc-800 text-zinc-100 shadow-sm">
+                        Studio
                     </button>
-                    <button id="tabHistoryBtn" onclick="switchTab('history')" class="px-3.5 py-1.5 rounded-lg text-xs font-medium text-zinc-400 hover:text-zinc-200 transition flex items-center gap-2">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
-                        </svg>
+                    <button id="tabHistoryBtn" onclick="switchMainTab('history')" class="px-3 py-1 rounded-md text-xs font-medium transition text-zinc-400 hover:text-zinc-200 flex items-center gap-1.5">
                         <span>Post Archive</span>
-                        <span id="navHistoryCount" class="px-1.5 py-0.5 rounded-md text-[10px] font-mono bg-zinc-800/90 text-zinc-300 border border-zinc-700/70">0</span>
+                        <span id="navHistoryCount" class="mono text-[10px] bg-zinc-800/90 text-zinc-300 px-1.5 py-0.2 rounded">0</span>
                     </button>
                 </nav>
             </div>
 
-            <!-- Compact Telemetry Pills + Schedule + Primary Actions -->
-            <div class="flex items-center gap-2.5">
-                <!-- Inline Telemetry Ribbon (Desktop) -->
-                <div class="hidden xl:flex items-center gap-4 px-3.5 py-1.5 rounded-xl bg-[#121215] border border-zinc-800/80 text-xs">
-                    <div class="flex items-center gap-2" title="Published LinkedIn Posts">
-                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                        <span class="text-zinc-400">Published</span>
-                        <span id="statPublished" class="font-mono font-semibold text-white">0</span>
+            <!-- Right: Compact Stats Ribbon + API Mode + Auto-Pilot + Profile Trigger -->
+            <div class="flex items-center gap-3">
+                <!-- Inline Telemetry Pill (Desktop) -->
+                <div class="hidden xl:flex items-center gap-3 bg-zinc-900/60 border border-zinc-800/80 rounded-lg px-3 py-1 text-xs">
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-zinc-500">Published</span>
+                        <span id="statPublished" class="mono font-semibold text-emerald-400">0</span>
                     </div>
-                    <div class="w-px h-3.5 bg-zinc-800"></div>
-                    <div class="flex items-center gap-2" title="Saved Drafts in Queue">
-                        <span class="w-1.5 h-1.5 rounded-full bg-sky-400"></span>
-                        <span class="text-zinc-400">Drafts</span>
-                        <span id="statDrafts" class="font-mono font-semibold text-white">0</span>
+                    <span class="text-zinc-800">|</span>
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-zinc-500">Drafts</span>
+                        <span id="statDrafts" class="mono font-semibold text-zinc-300">0</span>
                     </div>
-                    <div class="w-px h-3.5 bg-zinc-800"></div>
-                    <div class="flex items-center gap-2" title="Unique News Topics Locked (Never Repeats)">
-                        <span class="w-1.5 h-1.5 rounded-full bg-zinc-400"></span>
-                        <span class="text-zinc-400">Seen</span>
-                        <span id="statSeenTopics" class="font-mono font-semibold text-zinc-200">0</span>
+                    <span class="text-zinc-800">|</span>
+                    <div class="flex items-center gap-1.5" title="Unique news articles indexed in memory (never repeated)">
+                        <span class="text-zinc-500">Seen</span>
+                        <span id="statSeen" class="mono font-semibold text-zinc-300">0</span>
                     </div>
                 </div>
 
-                <!-- Clean Monochrome Schedule Button -->
-                <button onclick="openSchedulerModal()" class="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#121215] hover:bg-zinc-800/80 border border-zinc-800 text-xs font-medium text-zinc-200 transition" title="Configure Daily Auto-Pilot Schedule">
+                <!-- LinkedIn API Mode Pill -->
+                <button onclick="openProfileModal()" id="linkedinModePill" class="hidden sm:flex items-center gap-1.5 bg-zinc-900 hover:bg-zinc-800/80 border border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs transition" title="Configure LinkedIn API Access Token">
+                    <span id="linkedinModeDot" class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                    <span id="linkedinModeLabel" class="mono text-[10px] text-zinc-400">SANDBOX</span>
+                </button>
+
+                <!-- Auto-Pilot 4x/Day Scheduler Pill -->
+                <button onclick="openSchedulerModal()" class="flex items-center gap-2 bg-zinc-900 hover:bg-zinc-800/80 border border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs transition" title="Configure 4x/Day Peak-Time Auto-Pilot">
                     <span id="autoPilotDot" class="w-2 h-2 rounded-full bg-emerald-400"></span>
-                    <span id="autoPilotLabel" class="hidden sm:inline">Schedule (4x/d)</span>
+                    <span class="font-medium text-zinc-200 hidden sm:inline">Auto-Pilot</span>
+                    <span id="autoPilotNextSlot" class="mono text-[10px] text-zinc-400 bg-zinc-950 px-1.5 py-0.5 rounded border border-zinc-800/80">4x/day</span>
                 </button>
 
-                <button onclick="openProfileModal()" class="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#121215] hover:bg-zinc-800/80 border border-zinc-800 text-xs font-medium text-zinc-300 transition">
-                    <svg class="w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    <span class="hidden md:inline">Profile</span>
-                </button>
+                <div id="agentStatusBadge" class="hidden md:flex items-center gap-1.5 text-xs mono text-zinc-400 bg-zinc-900/80 border border-zinc-800 px-2.5 py-1 rounded-md">
+                    <span class="w-1.5 h-1.5 rounded-full bg-zinc-500" id="statusDot"></span>
+                    <span id="statusText">IDLE</span>
+                </div>
 
-                <button id="generateTopBtn" onclick="generatePost()" class="flex items-center gap-2 px-4 py-2 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 font-semibold text-xs transition shadow-sm active:scale-[0.98]">
-                    <svg id="genIcon" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                    </svg>
-                    <span id="genBtnText">Fetch Latest News</span>
+                <button onclick="openProfileModal()" class="flex items-center gap-2 bg-zinc-900 hover:bg-zinc-800/80 border border-zinc-800 rounded-lg px-2.5 py-1 transition group">
+                    <img id="navAvatarImg" src="/static/avatar.jpg" onerror="this.style.display='none'; document.getElementById('navAvatarFallback').style.display='flex';" class="w-5 h-5 rounded-full object-cover hidden">
+                    <div id="navAvatarFallback" class="w-5 h-5 rounded-full bg-zinc-700 text-[10px] font-bold text-white flex items-center justify-center">SN</div>
+                    <span id="navProfileName" class="text-xs font-medium text-zinc-300 group-hover:text-white hidden sm:inline">Shehan Nadeesha</span>
                 </button>
             </div>
         </div>
     </header>
 
-    <!-- Main Widescreen Workspace -->
+    <!-- Main Content Container -->
     <main class="flex-1 max-w-[1540px] w-full mx-auto px-4 sm:px-8 py-6">
 
-        <!-- Loading State -->
-        <div id="loadingState" class="hidden py-28 flex-col items-center justify-center text-center">
-            <div class="w-10 h-10 border-2 border-zinc-800 border-t-white rounded-full animate-spin mb-4"></div>
-            <h2 class="text-sm font-semibold text-zinc-100">Fetching Latest Unseen AI/ML Breakthrough...</h2>
-            <p class="text-xs text-zinc-500 mt-1.5 max-w-md">Verifying topic uniqueness in SQLite, drafting technical analysis, and rendering 1080x1080 Liquid Glass card.</p>
-        </div>
+        <!-- ==================== VIEW 1: STUDIO WORKSPACE ==================== -->
+        <div id="studioView" class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
-        <!-- TAB 1: STUDIO WORKBENCH VIEW -->
-        <div id="studioTabSection">
+            <!-- Left Column: Controls & Post Editor (5 Cols) -->
+            <div class="lg:col-span-5 flex flex-col gap-5">
 
-            <!-- Empty State -->
-            <div id="emptyState" class="hidden py-24 studio-surface rounded-2xl flex-col items-center justify-center text-center px-4">
-                <div class="w-11 h-11 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center mb-4 text-zinc-400">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path>
-                    </svg>
+                <!-- Agent Action Bar -->
+                <div class="surface rounded-xl p-5">
+                    <div class="flex items-center justify-between gap-4 mb-3">
+                        <div>
+                            <h1 class="text-sm font-semibold text-zinc-100">Autonomous Content Pipeline</h1>
+                            <p class="text-xs text-zinc-400 mt-0.5">24h chronological AI/ML news discovery with zero-repeat memory</p>
+                        </div>
+                        <span id="currentDraftStatusBadge" class="hidden mono text-[10px] uppercase tracking-wider px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 border border-zinc-700">
+                            DRAFT
+                        </span>
+                    </div>
+
+                    <div class="flex items-center gap-2.5 mt-4">
+                        <button id="generateBtn" onclick="generateNewDraft()"
+                            class="flex-1 bg-zinc-100 hover:bg-white text-zinc-950 font-medium text-xs px-4 py-2.5 rounded-lg transition flex items-center justify-center gap-2 shadow-sm active:scale-[0.99]">
+                            <svg id="generateIcon" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                            </svg>
+                            <span id="generateBtnText">Fetch New Unseen News</span>
+                        </button>
+
+                        <button id="regenerateBtn" onclick="regenerateCurrentDraft()" disabled
+                            title="Re-synthesize post & card for this same article"
+                            class="bg-zinc-900 hover:bg-zinc-800 disabled:opacity-40 disabled:pointer-events-none text-zinc-200 font-medium text-xs px-3.5 py-2.5 rounded-lg border border-zinc-800 transition flex items-center gap-1.5">
+                            <svg id="regenerateIcon" class="w-3.5 h-3.5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                            </svg>
+                            <span>Redo</span>
+                        </button>
+
+                        <button id="deleteDraftBtn" onclick="deleteCurrentStudioDraft()" disabled
+                            title="Discard this draft permanently (topic remains in seen memory so it won't repeat)"
+                            class="bg-zinc-900 hover:bg-red-950/50 hover:border-red-900/60 hover:text-red-300 disabled:opacity-40 disabled:pointer-events-none text-zinc-400 font-medium text-xs px-3 py-2.5 rounded-lg border border-zinc-800 transition flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                            </svg>
+                            <span>Discard</span>
+                        </button>
+                    </div>
+
+                    <!-- Source Reference Pill -->
+                    <div id="newsSourceBox" class="hidden mt-4 pt-3.5 border-t border-zinc-800/80">
+                        <div class="flex items-center justify-between gap-2 mb-1">
+                            <span class="text-[10px] mono uppercase tracking-wider text-zinc-400" id="newsSourceTag">SOURCE</span>
+                            <a id="newsLink" href="#" target="_blank" class="text-[11px] text-zinc-400 hover:text-white underline underline-offset-2">Read original article ↗</a>
+                        </div>
+                        <p id="newsTitle" class="text-xs font-medium text-zinc-200 leading-snug"></p>
+                    </div>
                 </div>
-                <h2 class="text-base font-semibold text-white">No Active Draft in Studio</h2>
-                <p class="text-xs text-zinc-400 mt-1.5 mb-6 max-w-sm">Scan the last 24 hours of AI/ML news now or let the daily scheduler generate drafts automatically.</p>
-                <button onclick="generatePost()" class="px-5 py-2.5 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 font-semibold text-xs transition">
-                    Generate Fresh Post
-                </button>
+
+                <!-- Post Copy Editor -->
+                <div class="surface rounded-xl p-5 flex flex-col">
+                    <div class="flex items-center justify-between mb-3">
+                        <label for="postEditor" class="text-xs font-medium text-zinc-300 uppercase tracking-wider mono">Post Copy Editor</label>
+                        <div class="flex items-center gap-3">
+                            <span id="charCount" class="text-[11px] mono text-zinc-400">0 chars</span>
+                            <button onclick="copyPostText()" class="text-xs text-zinc-400 hover:text-zinc-200 transition">Copy text</button>
+                        </div>
+                    </div>
+
+                    <textarea id="postEditor" rows="15" oninput="syncEditorToPreview()"
+                        class="w-full bg-[#09090b] text-zinc-100 text-[13px] leading-relaxed p-3.5 rounded-lg border border-zinc-800 focus:border-zinc-600 focus:outline-none resize-y mono"
+                        placeholder="Click 'Fetch New Unseen News' or wait for your 4x/day Auto-Pilot schedule..."></textarea>
+
+                    <!-- Approval Bar -->
+                    <div class="mt-4 pt-4 border-t border-zinc-800/80 flex items-center justify-between gap-3">
+                        <div class="flex flex-col">
+                            <span class="text-[11px] text-zinc-400">Human-in-the-Loop Gate</span>
+                            <span id="publishModeHint" class="text-[10px] mono text-zinc-500">Checking LinkedIn API...</span>
+                        </div>
+                        <button id="publishBtn" onclick="approveAndPublish()"
+                            class="bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-semibold text-xs px-5 py-2.5 rounded-lg transition flex items-center gap-2">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            <span id="publishBtnText">Approve & Publish</span>
+                        </button>
+                    </div>
+                </div>
             </div>
 
-            <!-- Widescreen Two-Pane Grid -->
-            <div id="studioGrid" class="hidden grid-cols-1 lg:grid-cols-12 gap-7 items-start">
-
-                <!-- Left Pane: Source & Post Editor (7 Columns) -->
-                <div class="lg:col-span-7 flex flex-col gap-5">
-
-                    <!-- Source Article Header Panel -->
-                    <div class="studio-surface rounded-2xl p-5">
-                        <div class="flex flex-wrap items-center justify-between gap-2 mb-2.5">
-                            <div class="flex items-center gap-2">
-                                <span id="newsSourceBadge" class="text-[11px] font-semibold uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-zinc-900 text-zinc-300 border border-zinc-800">
-                                    AI RESEARCH
-                                </span>
-                                <span id="draftStatusBadge" class="text-[11px] font-medium px-2.5 py-0.5 rounded-md bg-zinc-800 text-zinc-300 border border-zinc-700">
-                                    Draft
-                                </span>
-                                <span id="draftCreatedTime" class="text-[11px] font-mono text-zinc-500 hidden sm:inline"></span>
-                            </div>
-
-                            <a id="newsSourceLink" href="#" target="_blank" rel="noopener noreferrer" class="text-xs font-medium text-zinc-400 hover:text-white flex items-center gap-1.5 transition">
-                                <span>Original Source</span>
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                                </svg>
-                            </a>
-                        </div>
-
-                        <h2 id="newsHeadline" class="text-lg sm:text-xl font-semibold text-white leading-snug">
-                            Loading headline...
-                        </h2>
-                    </div>
-
-                    <!-- Post Copy Editor Panel -->
-                    <div class="studio-surface rounded-2xl p-5 flex flex-col">
-                        <div class="flex items-center justify-between mb-3">
-                            <div class="flex items-center gap-2">
-                                <label for="postEditor" class="text-xs font-semibold uppercase tracking-wider text-zinc-300">
-                                    Post Copy Editor
-                                </label>
-                            </div>
-
-                            <div class="flex items-center gap-3">
-                                <span id="charCounter" class="text-xs text-zinc-500 font-mono">0 chars</span>
-                                <button onclick="copyPostText()" class="text-xs text-zinc-300 hover:text-white flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 transition">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
-                                    </svg>
-                                    <span id="copyBtnLabel">Copy Text</span>
-                                </button>
-                            </div>
-                        </div>
-
-                        <textarea
-                            id="postEditor"
-                            rows="15"
-                            oninput="syncLivePreview()"
-                            class="w-full bg-[#09090b] text-zinc-100 text-[14px] leading-relaxed p-4 rounded-xl border border-zinc-800/90 focus:outline-none focus:border-zinc-600 transition resize-y"
-                            placeholder="Write or refine your LinkedIn post..."
-                        ></textarea>
-
-                        <!-- Workbench Footer Controls -->
-                        <div class="flex flex-wrap items-center justify-between gap-3 mt-4 pt-4 border-t border-zinc-800/80">
-                            <div class="flex flex-wrap items-center gap-2">
-                                <button onclick="generatePost()" class="px-3.5 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border border-zinc-800 font-medium text-xs flex items-center gap-2 transition">
-                                    <svg class="w-3.5 h-3.5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path>
-                                    </svg>
-                                    <span>Skip to Next News</span>
-                                </button>
-
-                                <a id="downloadImgBtn" href="#" download="linkedin_visual.jpg" class="px-3.5 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 font-medium text-xs flex items-center gap-1.5 transition">
-                                    <svg class="w-3.5 h-3.5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-                                    </svg>
-                                    <span>Download Card</span>
-                                </a>
-
-                                <button onclick="discardCurrentDraft()" title="Delete this draft permanently" class="px-3.5 py-2.5 rounded-xl bg-zinc-900 hover:bg-rose-950/40 text-zinc-400 hover:text-rose-400 border border-zinc-800 hover:border-rose-900/50 font-medium text-xs flex items-center gap-1.5 transition">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                    </svg>
-                                    <span>Discard</span>
-                                </button>
-                            </div>
-
-                            <button id="publishBtn" onclick="publishPost()" class="px-5 py-2.5 rounded-xl bg-[#0A66C2] hover:bg-[#004182] text-white font-semibold text-xs flex items-center gap-2 transition shadow-md active:scale-[0.99]">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M5 13l4 4L19 7"></path>
-                                </svg>
-                                <span>Approve & Publish to LinkedIn</span>
-                            </button>
+            <!-- Right Column: Real-Time LinkedIn Feed Preview (7 Cols) -->
+            <div class="lg:col-span-7 flex flex-col">
+                <div class="surface rounded-xl p-5">
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="text-xs font-medium text-zinc-300 uppercase tracking-wider mono">Live LinkedIn Feed Preview</span>
+                        <div class="flex items-center gap-3">
+                            <a id="downloadCardBtn" href="#" download="linkedin-card.jpg" class="hidden text-xs text-zinc-300 hover:text-white transition">Download 1080×1080 Card ↓</a>
+                            <span class="text-[11px] mono text-zinc-400">iOS Liquid Glass</span>
                         </div>
                     </div>
-                </div>
 
-                <!-- Right Pane: Authentic LinkedIn Dark Mode Feed Preview (5 Columns) -->
-                <div class="lg:col-span-5 lg:sticky lg:top-24">
-                    <div class="flex items-center justify-between mb-2.5 px-1">
-                        <span class="text-xs font-semibold uppercase tracking-wider text-zinc-400">Live LinkedIn Feed Preview</span>
-                        <a id="profileLinkPreview" href="https://www.linkedin.com/in/shehan-nadeesha/" target="_blank" class="text-xs text-zinc-400 hover:text-white flex items-center gap-1 transition">
-                            <span>linkedin.com/in/shehan-nadeesha</span>
-                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                            </svg>
-                        </a>
-                    </div>
-
-                    <div class="linkedin-card rounded-2xl overflow-hidden">
+                    <!-- Simulated LinkedIn Feed Card -->
+                    <div class="bg-[#1b1f23] border border-zinc-800 rounded-xl overflow-hidden shadow-2xl max-w-[640px] mx-auto">
                         <!-- LinkedIn Author Header -->
                         <div class="p-4 flex items-start justify-between">
                             <div class="flex items-center gap-3">
                                 <div class="relative w-12 h-12 rounded-full overflow-hidden bg-zinc-800 border border-zinc-700 flex items-center justify-center shrink-0">
-                                    <img id="previewAvatarImg" src="" alt="Shehan Nadeesha" class="hidden w-full h-full object-cover" />
-                                    <span id="previewAvatarFallback" class="text-sm font-bold text-zinc-200">SN</span>
+                                    <img id="previewAvatarImg" src="/static/avatar.jpg" onerror="this.style.display='none'; document.getElementById('previewAvatarFallback').style.display='flex';" class="w-full h-full object-cover">
+                                    <div id="previewAvatarFallback" class="w-full h-full bg-zinc-700 text-zinc-100 font-bold text-sm items-center justify-center hidden">
+                                        SN
+                                    </div>
                                 </div>
-                                <div class="min-w-0">
+                                <div>
                                     <div class="flex items-center gap-1.5">
-                                        <span id="previewProfileName" class="text-sm font-semibold text-white truncate">Shehan Nadeesha</span>
+                                        <a id="previewProfileLink" href="https://www.linkedin.com/in/shehan-nadeesha/" target="_blank" class="font-semibold text-sm text-white hover:underline">Shehan Nadeesha</a>
                                         <span class="text-xs text-zinc-400">• 1st</span>
                                     </div>
-                                    <p id="previewProfileHeadline" class="text-xs text-zinc-400 leading-tight mt-0.5 line-clamp-1">AI/ML Engineer</p>
-                                    <div class="flex items-center gap-1 text-[11px] text-zinc-500 mt-0.5">
-                                        <span>Just now</span>
-                                        <span>•</span>
-                                        <svg class="w-3 h-3 fill-current" viewBox="0 0 16 16">
-                                            <path d="M8 1a7 7 0 107 7 7 7 0 00-7-7zM3 8a5 5 0 011-3l.55.55A1.5 1.5 0 015 6.62v1.07a.75.75 0 00.22.53l.56.56a.75.75 0 00.53.22H7v.69a.75.75 0 00.22.53l.56.56a.75.75 0 01.22.53V13a5 5 0 01-5-5zm6.24 4.83l2-2.46a.75.75 0 00.09-.8l-.58-1.16A.76.76 0 0010 8H7v-.19a.51.51 0 01.28-.45l.38-.19a.74.74 0 01.68 0L9 7.5l.38-.7a1 1 0 00.12-.48v-.85a.78.78 0 01.21-.53l1.07-1.09a5 5 0 01-1.54 9z"></path>
-                                        </svg>
-                                    </div>
+                                    <p id="previewHeadline" class="text-xs text-zinc-300">AI/ML Engineer</p>
+                                    <p class="text-[11px] text-zinc-400 flex items-center gap-1 mt-0.5">
+                                        <span>Just now</span> • <span>🌐</span>
+                                    </p>
                                 </div>
                             </div>
-
-                            <button onclick="openProfileModal()" class="text-xs text-zinc-400 hover:text-white px-2.5 py-1 rounded-lg hover:bg-zinc-800 transition">
-                                Edit
-                            </button>
+                            <button onclick="openProfileModal()" class="text-xs text-zinc-400 hover:text-zinc-200 px-2 py-1 rounded hover:bg-zinc-800 transition">Edit Profile</button>
                         </div>
 
-                        <!-- Post Caption Preview -->
+                        <!-- LinkedIn Post Text Preview -->
                         <div class="px-4 pb-3">
-                            <div id="livePreviewText" class="text-[13.5px] text-zinc-200 whitespace-pre-line leading-relaxed wrap-anywhere"></div>
-                            <button id="toggleExpandBtn" onclick="togglePreviewExpand()" class="hidden mt-1 text-xs font-medium text-zinc-400 hover:text-white transition">
+                            <div id="linkedinPreviewText" class="preview-body-text text-[13.5px] text-zinc-100 whitespace-pre-line leading-relaxed">Your generated LinkedIn post will render here in real time as you type or generate...</div>
+                            <button id="previewToggleMoreBtn" onclick="togglePreviewExpand()" class="hidden mt-1 text-xs font-medium text-zinc-400 hover:text-zinc-200 transition">
                                 …see more
                             </button>
                         </div>
 
-                        <!-- Generated 1080x1080 Liquid Glass Visual Card -->
-                        <div class="bg-zinc-950 border-y border-zinc-800/80 aspect-square w-full overflow-hidden">
-                            <img id="postImage" src="" alt="Generated Visual Card" class="w-full h-full object-cover" />
+                        <!-- Generated 1080x1080 Visual Card -->
+                        <div class="relative aspect-square w-full bg-zinc-950 border-y border-zinc-800/80 flex items-center justify-center overflow-hidden">
+                            <div id="imagePlaceholder" class="text-center p-6">
+                                <p class="text-xs text-zinc-400 mono">1080 × 1080 Liquid Glass Visual</p>
+                            </div>
+                            <img id="generatedImage" src="" alt="Generated Visual" class="hidden w-full h-full object-cover">
                         </div>
 
-                        <!-- Authentic LinkedIn SVG Action Bar -->
-                        <div class="px-3 py-2 flex items-center justify-around text-xs font-medium text-zinc-400">
-                            <button type="button" class="flex items-center gap-2 py-2 px-3 rounded-lg hover:bg-zinc-800/70 hover:text-zinc-200 transition">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5"></path>
-                                </svg>
-                                <span>Like</span>
-                            </button>
-                            <button type="button" class="flex items-center gap-2 py-2 px-3 rounded-lg hover:bg-zinc-800/70 hover:text-zinc-200 transition">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
-                                </svg>
-                                <span>Comment</span>
-                            </button>
-                            <button type="button" class="flex items-center gap-2 py-2 px-3 rounded-lg hover:bg-zinc-800/70 hover:text-zinc-200 transition">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                                </svg>
-                                <span>Repost</span>
-                            </button>
-                            <button type="button" class="flex items-center gap-2 py-2 px-3 rounded-lg hover:bg-zinc-800/70 hover:text-zinc-200 transition">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
-                                </svg>
-                                <span>Send</span>
-                            </button>
+                        <!-- LinkedIn Social Engagement Footer -->
+                        <div class="px-4 py-2.5 bg-[#1b1f23] flex items-center justify-between text-xs text-zinc-400">
+                            <span class="hover:text-zinc-200 cursor-default">Like</span>
+                            <span class="hover:text-zinc-200 cursor-default">Comment</span>
+                            <span class="hover:text-zinc-200 cursor-default">Repost</span>
+                            <span class="hover:text-zinc-200 cursor-default">Send</span>
                         </div>
                     </div>
                 </div>
-
             </div>
         </div>
 
-        <!-- TAB 2: POST ARCHIVE & FILTERABLE HISTORY VIEW -->
-        <div id="historyTabSection" class="hidden">
-
-            <!-- Archive Controls Header -->
-            <div class="studio-surface rounded-2xl p-4 sm:p-5 mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div class="flex flex-wrap items-center gap-2">
-                    <button id="filterAllBtn" onclick="setHistoryFilter('all')" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-white text-zinc-950 transition flex items-center gap-2">
-                        <span>All Posts</span>
-                        <span id="filterCountAll" class="px-1.5 py-0.2 rounded text-[10px] font-mono bg-zinc-200 text-zinc-900">0</span>
-                    </button>
-
-                    <button id="filterPublishedBtn" onclick="setHistoryFilter('published')" class="px-3.5 py-1.5 rounded-xl text-xs font-medium bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800 transition flex items-center gap-2">
-                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                        <span>Published</span>
-                        <span id="filterCountPublished" class="px-1.5 py-0.2 rounded text-[10px] font-mono bg-zinc-800 text-zinc-300">0</span>
-                    </button>
-
-                    <button id="filterDraftBtn" onclick="setHistoryFilter('draft')" class="px-3.5 py-1.5 rounded-xl text-xs font-medium bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800 transition flex items-center gap-2">
-                        <span class="w-1.5 h-1.5 rounded-full bg-sky-400"></span>
-                        <span>Drafts Only</span>
-                        <span id="filterCountDraft" class="px-1.5 py-0.2 rounded text-[10px] font-mono bg-zinc-800 text-zinc-300">0</span>
-                    </button>
-                </div>
-
-                <div class="flex flex-wrap items-center gap-3">
-                    <div class="relative flex-1 sm:w-64">
-                        <input
-                            id="historySearchInput"
-                            type="text"
-                            oninput="renderHistoryCards()"
-                            placeholder="Search headline or topic..."
-                            class="w-full pl-9 pr-3 py-1.5 rounded-xl bg-[#09090b] border border-zinc-800 text-xs text-zinc-200 focus:outline-none focus:border-zinc-600"
-                        />
-                        <svg class="w-3.5 h-3.5 text-zinc-500 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                        </svg>
+        <!-- ==================== VIEW 2: POST ARCHIVE & HISTORY ==================== -->
+        <div id="historyView" class="hidden">
+            <div class="surface rounded-xl p-6">
+                <!-- Archive Header & Filter Controls -->
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-zinc-800/80">
+                    <div>
+                        <h2 class="text-base font-semibold text-zinc-100">Post Archive & Deduplication Log</h2>
+                        <p class="text-xs text-zinc-400 mt-0.5">Filter your generated posts or discard unwanted drafts. Discarded topics stay in memory so they never repeat.</p>
                     </div>
 
-                    <button onclick="clearAllUnwantedDrafts()" class="px-3.5 py-1.5 rounded-xl bg-zinc-900 hover:bg-rose-950/40 text-zinc-300 hover:text-rose-400 border border-zinc-800 hover:border-rose-900/50 text-xs font-medium flex items-center gap-1.5 transition">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                        </svg>
-                        <span>Clear All Drafts</span>
-                    </button>
+                    <div class="flex flex-wrap items-center gap-2.5">
+                        <!-- Filter Pill Group -->
+                        <div class="flex items-center bg-zinc-900 p-1 rounded-lg border border-zinc-800">
+                            <button id="filterAllBtn" onclick="setHistoryFilter('all')" class="px-3 py-1 rounded-md text-xs font-medium transition bg-zinc-800 text-zinc-100">
+                                All Posts
+                            </button>
+                            <button id="filterPublishedBtn" onclick="setHistoryFilter('published')" class="px-3 py-1 rounded-md text-xs font-medium transition text-zinc-400 hover:text-zinc-200">
+                                Published
+                            </button>
+                            <button id="filterDraftBtn" onclick="setHistoryFilter('draft')" class="px-3 py-1 rounded-md text-xs font-medium transition text-zinc-400 hover:text-zinc-200">
+                                Drafts Only
+                            </button>
+                        </div>
+
+                        <!-- Search Input -->
+                        <input id="historySearchInput" type="text" oninput="renderFilteredHistory()" placeholder="Search headline or source..."
+                            class="bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs text-zinc-100 focus:border-zinc-600 focus:outline-none w-48 sm:w-60">
+
+                        <!-- Bulk Clear Drafts Button -->
+                        <button id="clearAllDraftsBtn" onclick="clearAllDrafts()"
+                            class="bg-zinc-900 hover:bg-red-950/50 hover:border-red-900/60 hover:text-red-300 text-zinc-300 text-xs font-medium px-3 py-1.5 rounded-lg border border-zinc-800 transition flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                            </svg>
+                            <span>Clear All Drafts</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Archive Grid -->
+                <div id="historyList" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mt-5">
+                    <p class="text-xs text-zinc-400 py-8 text-center col-span-full">No posts recorded yet.</p>
                 </div>
             </div>
-
-            <div id="historyEmptyState" class="hidden py-20 studio-surface rounded-2xl text-center px-4">
-                <p id="historyEmptyText" class="text-sm text-zinc-400">No matching posts found in your archive.</p>
-            </div>
-
-            <div id="historyListGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5"></div>
         </div>
 
     </main>
 
-    <!-- Clean Linear-Grade Automation Schedule Modal (Zero Emojis, Native Dark Controls) -->
-    <div id="schedulerModal" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-[#111113] border border-zinc-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl">
-
+    <!-- ==================== MODAL 1: 4x/DAY AUTO-PILOT SCHEDULER ==================== -->
+    <div id="schedulerModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="bg-[#111113] border border-zinc-800 rounded-xl max-w-lg w-full p-6 shadow-2xl">
             <!-- Modal Header -->
             <div class="flex items-start justify-between pb-4 border-b border-zinc-800/80">
                 <div>
                     <div class="flex items-center gap-2">
-                        <h3 class="text-sm font-semibold text-white">Daily Automation Schedule</h3>
-                        <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-900 text-zinc-400 border border-zinc-800">
-                            Recurring Daily • UTC+05:30
-                        </span>
+                        <h3 class="text-sm font-semibold text-zinc-100">Daily Automation Schedule</h3>
+                        <span class="mono text-[10px] text-zinc-400 bg-zinc-900 border border-zinc-800 px-1.5 py-0.5 rounded">UTC+05:30</span>
                     </div>
-                    <p class="text-xs text-zinc-400 mt-1">
-                        Runs automatically every day in the background. Set once and leave active.
-                    </p>
+                    <p class="text-xs text-zinc-400 mt-1">Recurring 4x/day autonomous draft synthesis and push dispatch.</p>
                 </div>
-                <button onclick="closeSchedulerModal()" class="text-zinc-500 hover:text-zinc-200 p-1 rounded-lg hover:bg-zinc-900 transition">
+                <button onclick="closeSchedulerModal()" class="text-zinc-500 hover:text-zinc-200 transition p-1 rounded-lg hover:bg-zinc-900">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
                 </button>
             </div>
 
-            <form onsubmit="saveSchedulerSettings(event)" class="mt-5 space-y-5">
-
-                <!-- Recurring Status & Custom Toggle Switch -->
-                <div class="p-4 rounded-xl bg-[#09090b] border border-zinc-800/90 flex items-center justify-between gap-4">
+            <div class="space-y-4 mt-4">
+                <!-- Row 1: Recurring Auto-Pilot Toggle Switch -->
+                <div class="flex items-center justify-between bg-[#09090b] border border-zinc-800/90 rounded-lg px-4 py-3">
                     <div>
-                        <span class="text-[11px] font-medium uppercase tracking-wider text-zinc-500">Next Scheduled Run</span>
-                        <p id="schedNextSlotText" class="text-xs font-mono text-zinc-200 mt-1">Loading schedule...</p>
+                        <p class="text-xs font-medium text-zinc-200">Autonomous Daily Execution</p>
+                        <p class="text-[11px] text-zinc-500 mt-0.5">Repeats every 24 hours without manual re-arming</p>
                     </div>
-
-                    <label class="inline-flex items-center gap-3 cursor-pointer select-none">
-                        <span class="text-xs font-medium text-zinc-300">Auto-Pilot</span>
-                        <span class="relative inline-flex items-center">
-                            <input id="schedEnabledToggle" type="checkbox" checked class="sr-only peer" />
-                            <div class="w-9 h-5 bg-zinc-800 rounded-full peer peer-checked:bg-white transition-colors"></div>
-                            <div class="absolute left-0.5 top-0.5 w-4 h-4 bg-zinc-400 rounded-full peer-checked:bg-zinc-950 peer-checked:translate-x-4 transition-transform"></div>
-                        </span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input id="schedEnabledToggle" type="checkbox" checked class="sr-only peer">
+                        <div class="w-9 h-5 bg-zinc-800 rounded-full peer peer-checked:bg-zinc-100 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-zinc-400 peer-checked:after:bg-zinc-950 after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4"></div>
                     </label>
                 </div>
 
-                <!-- 4 Peak Time Slots (Clean Typography, No Emojis) -->
+                <!-- Row 2: 4 Peak LinkedIn Time Slots -->
                 <div>
-                    <div class="flex items-center justify-between mb-2.5">
-                        <label class="text-xs font-medium text-zinc-300">
-                            Daily Generation Windows (Sri Lanka Time)
-                        </label>
-                        <span class="text-[11px] text-zinc-500">4 drafts / day</span>
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="text-[11px] font-medium text-zinc-400 uppercase tracking-wider mono">Execution Windows (4x / Day)</label>
+                        <span class="text-[11px] mono text-zinc-500">24-Hour Format</span>
                     </div>
-
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                        <div class="p-2.5 rounded-xl bg-[#09090b] border border-zinc-800/90">
-                            <span class="text-[10px] font-mono uppercase tracking-wider text-zinc-500 block mb-1">Slot 01 • Morning</span>
-                            <input id="slotTime1" type="time" value="08:30" required class="w-full bg-transparent text-xs font-mono text-zinc-100 focus:outline-none" />
+                    <div class="grid grid-cols-2 gap-2.5">
+                        <div class="bg-[#09090b] border border-zinc-800/90 rounded-lg px-3 py-2 flex items-center justify-between focus-within:border-zinc-600 transition">
+                            <div>
+                                <span class="text-[10px] mono uppercase tracking-wider text-zinc-500 block">SLOT 01</span>
+                                <span class="text-[11px] text-zinc-300">Morning Commute</span>
+                            </div>
+                            <input id="slotTime1" type="time" value="08:30" class="bg-transparent text-xs text-zinc-100 mono focus:outline-none">
                         </div>
-                        <div class="p-2.5 rounded-xl bg-[#09090b] border border-zinc-800/90">
-                            <span class="text-[10px] font-mono uppercase tracking-wider text-zinc-500 block mb-1">Slot 02 • Midday</span>
-                            <input id="slotTime2" type="time" value="12:30" required class="w-full bg-transparent text-xs font-mono text-zinc-100 focus:outline-none" />
+                        <div class="bg-[#09090b] border border-zinc-800/90 rounded-lg px-3 py-2 flex items-center justify-between focus-within:border-zinc-600 transition">
+                            <div>
+                                <span class="text-[10px] mono uppercase tracking-wider text-zinc-500 block">SLOT 02</span>
+                                <span class="text-[11px] text-zinc-300">Midday Peak</span>
+                            </div>
+                            <input id="slotTime2" type="time" value="12:30" class="bg-transparent text-xs text-zinc-100 mono focus:outline-none">
                         </div>
-                        <div class="p-2.5 rounded-xl bg-[#09090b] border border-zinc-800/90">
-                            <span class="text-[10px] font-mono uppercase tracking-wider text-zinc-500 block mb-1">Slot 03 • Evening</span>
-                            <input id="slotTime3" type="time" value="17:30" required class="w-full bg-transparent text-xs font-mono text-zinc-100 focus:outline-none" />
+                        <div class="bg-[#09090b] border border-zinc-800/90 rounded-lg px-3 py-2 flex items-center justify-between focus-within:border-zinc-600 transition">
+                            <div>
+                                <span class="text-[10px] mono uppercase tracking-wider text-zinc-500 block">SLOT 03</span>
+                                <span class="text-[11px] text-zinc-300">Evening Wrap</span>
+                            </div>
+                            <input id="slotTime3" type="time" value="17:30" class="bg-transparent text-xs text-zinc-100 mono focus:outline-none">
                         </div>
-                        <div class="p-2.5 rounded-xl bg-[#09090b] border border-zinc-800/90">
-                            <span class="text-[10px] font-mono uppercase tracking-wider text-zinc-500 block mb-1">Slot 04 • Night</span>
-                            <input id="slotTime4" type="time" value="21:00" required class="w-full bg-transparent text-xs font-mono text-zinc-100 focus:outline-none" />
+                        <div class="bg-[#09090b] border border-zinc-800/90 rounded-lg px-3 py-2 flex items-center justify-between focus-within:border-zinc-600 transition">
+                            <div>
+                                <span class="text-[10px] mono uppercase tracking-wider text-zinc-500 block">SLOT 04</span>
+                                <span class="text-[11px] text-zinc-300">Night Founders</span>
+                            </div>
+                            <input id="slotTime4" type="time" value="21:00" class="bg-transparent text-xs text-zinc-100 mono focus:outline-none">
                         </div>
                     </div>
                 </div>
 
-                <!-- System Notifications Row -->
-                <div class="p-4 rounded-xl bg-[#09090b] border border-zinc-800/90 flex items-center justify-between gap-4">
-                    <div>
-                        <div class="flex items-center gap-2">
-                            <p class="text-xs font-medium text-zinc-200">Desktop & PWA Push Alerts</p>
-                            <span id="notifBadgeDot" class="w-1.5 h-1.5 rounded-full bg-zinc-500"></span>
+                <!-- Row 3: Push Notification Channels -->
+                <div class="bg-[#09090b] border border-zinc-800/90 rounded-lg p-3.5 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-medium text-zinc-200">Browser & PWA Push Alerts</p>
+                            <p id="browserPermStatus" class="text-[11px] text-zinc-500 mt-0.5">System notification permission required</p>
                         </div>
-                        <p id="notifPermissionStatus" class="text-[11px] text-zinc-500 mt-0.5">Notifies when a new draft enters your workbench</p>
-                    </div>
-                    <div class="flex items-center gap-2 shrink-0">
-                        <button id="enableAlertsBtn" type="button" onclick="enableBrowserNotifications()" class="px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border border-zinc-800 text-xs font-medium transition">
-                            Allow
-                        </button>
-                        <button type="button" onclick="sendTestNotification()" class="px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 text-xs font-medium transition">
-                            Send Test
+                        <button onclick="requestNotificationPermission()" id="enablePushBtn"
+                            class="bg-zinc-900 hover:bg-zinc-800 text-zinc-200 text-xs font-medium px-3 py-1.5 rounded-md border border-zinc-800 transition">
+                            Authorize
                         </button>
                     </div>
-                </div>
 
-                <!-- Optional Mobile Push Relay (ntfy.sh) -->
-                <div>
-                    <div class="flex items-center justify-between mb-1.5">
-                        <label class="text-xs font-medium text-zinc-300">
-                            Mobile Push Topic <span class="text-zinc-500 font-normal">(Optional • ntfy.sh)</span>
-                        </label>
-                        <a href="https://ntfy.sh" target="_blank" class="text-[11px] text-zinc-400 hover:text-white underline">Docs</a>
+                    <div class="pt-3 border-t border-zinc-800/70">
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="text-[11px] font-medium text-zinc-300">iPhone / Android Lock-Screen Topic (ntfy.sh)</label>
+                            <span class="mono text-[10px] text-zinc-500">Optional • Free</span>
+                        </div>
+                        <input id="ntfyTopicInput" type="text" placeholder="e.g. shehan-linkedin-ai-agent"
+                            class="w-full bg-[#111113] border border-zinc-800 rounded-md px-3 py-1.5 text-xs text-zinc-100 mono focus:border-zinc-600 focus:outline-none">
                     </div>
-                    <input
-                        id="inputNtfyTopic"
-                        type="text"
-                        placeholder="shehan-linkedin-agent"
-                        class="w-full px-3 py-2 rounded-xl bg-[#09090b] border border-zinc-800 text-xs text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-zinc-600 font-mono"
-                    />
-                    <p class="text-[11px] text-zinc-500 mt-1.5 leading-relaxed">
-                        Subscribe to this topic in the free iOS/Android ntfy app to receive background phone alerts when Safari is closed.
-                    </p>
                 </div>
 
                 <!-- Footer Actions -->
-                <div class="flex items-center justify-end gap-2.5 pt-4 border-t border-zinc-800/80">
-                    <button type="button" onclick="closeSchedulerModal()" class="px-4 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 text-xs font-medium transition">
-                        Cancel
+                <div class="pt-2 flex items-center justify-between gap-2">
+                    <button onclick="sendTestAlert()" class="bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs font-medium px-3.5 py-2 rounded-lg border border-zinc-800 transition">
+                        Dispatch Test Ping
                     </button>
-                    <button type="submit" class="px-4 py-2 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 text-xs font-semibold transition">
-                        Save Configuration
-                    </button>
+                    <div class="flex items-center gap-2">
+                        <button onclick="closeSchedulerModal()" class="px-3.5 py-2 rounded-lg text-xs text-zinc-400 hover:text-zinc-200">Cancel</button>
+                        <button onclick="saveSchedulerSettings()" class="bg-zinc-100 hover:bg-white text-zinc-950 font-semibold text-xs px-4 py-2 rounded-lg transition">
+                            Apply Schedule
+                        </button>
+                    </div>
                 </div>
-            </form>
+            </div>
         </div>
     </div>
 
-    <!-- LinkedIn Profile Settings Modal -->
-    <div id="profileModal" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-[#111113] border border-zinc-800 rounded-2xl max-w-md w-full p-6 shadow-2xl">
+    <!-- ==================== MODAL 2: AUTHOR IDENTITY & LINKEDIN API SETTINGS ==================== -->
+    <div id="profileModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="bg-[#111113] border border-zinc-800 rounded-xl max-w-lg w-full p-6 shadow-2xl max-h-[92vh] overflow-y-auto">
             <div class="flex items-center justify-between pb-4 border-b border-zinc-800/80">
                 <div>
-                    <h3 class="text-sm font-semibold text-white">LinkedIn Profile Branding</h3>
-                    <p class="text-xs text-zinc-400 mt-0.5">Used on both the Feed Preview & generated Liquid Glass cards</p>
+                    <h3 class="text-sm font-semibold text-zinc-100">Author Identity & LinkedIn API</h3>
+                    <p class="text-xs text-zinc-400 mt-0.5">Configure your Liquid Glass card branding and live LinkedIn OAuth token.</p>
                 </div>
-                <button onclick="closeProfileModal()" class="text-zinc-500 hover:text-zinc-200 p-1 rounded-lg hover:bg-zinc-900 transition">
+                <button onclick="closeProfileModal()" class="text-zinc-500 hover:text-zinc-200 transition p-1 rounded-lg hover:bg-zinc-900">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
                 </button>
             </div>
 
-            <form onsubmit="saveProfile(event)" class="mt-4 space-y-4">
-                <div>
-                    <label class="block text-xs font-medium text-zinc-300 mb-1">Full Name</label>
-                    <input id="inputProfileName" type="text" required class="w-full px-3 py-2 rounded-xl bg-[#09090b] border border-zinc-800 text-xs text-white focus:outline-none focus:border-zinc-600" />
+            <!-- Section 1: Author Branding -->
+            <form onsubmit="saveProfile(event)" class="space-y-4 mt-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[11px] mono uppercase text-zinc-400 mb-1">Full Name</label>
+                        <input id="inputProfileName" type="text" value="Shehan Nadeesha" required
+                            class="w-full bg-[#09090b] border border-zinc-800 rounded-lg px-3 py-2 text-xs text-zinc-100 focus:border-zinc-600 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] mono uppercase text-zinc-400 mb-1">Role / Headline</label>
+                        <input id="inputProfileHeadline" type="text" value="AI/ML Engineer" required
+                            class="w-full bg-[#09090b] border border-zinc-800 rounded-lg px-3 py-2 text-xs text-zinc-100 focus:border-zinc-600 focus:outline-none">
+                    </div>
                 </div>
                 <div>
-                    <label class="block text-xs font-medium text-zinc-300 mb-1">Role / Headline</label>
-                    <input id="inputProfileHeadline" type="text" required class="w-full px-3 py-2 rounded-xl bg-[#09090b] border border-zinc-800 text-xs text-white focus:outline-none focus:border-zinc-600" />
+                    <label class="block text-[11px] mono uppercase text-zinc-400 mb-1">LinkedIn Profile URL</label>
+                    <input id="inputProfileUrl" type="url" value="https://www.linkedin.com/in/shehan-nadeesha/" required
+                        class="w-full bg-[#09090b] border border-zinc-800 rounded-lg px-3 py-2 text-xs text-zinc-100 focus:border-zinc-600 focus:outline-none">
                 </div>
                 <div>
-                    <label class="block text-xs font-medium text-zinc-300 mb-1">LinkedIn Profile URL</label>
-                    <input id="inputProfileUrl" type="url" required class="w-full px-3 py-2 rounded-xl bg-[#09090b] border border-zinc-800 text-xs text-white focus:outline-none focus:border-zinc-600" />
+                    <label class="block text-[11px] mono uppercase text-zinc-400 mb-1">Profile Headshot (Used in Preview & 1080×1080 Card)</label>
+                    <input id="inputProfileAvatar" type="file" accept="image/jpeg,image/png,image/webp"
+                        class="w-full text-xs text-zinc-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-zinc-800 file:text-zinc-200 hover:file:bg-zinc-700">
                 </div>
-                <div>
-                    <label class="block text-xs font-medium text-zinc-300 mb-1">Profile Photo (Embedded on Card & Preview)</label>
-                    <input id="inputProfileAvatar" type="file" accept="image/*" class="w-full text-xs text-zinc-400 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-zinc-800 file:text-zinc-200 hover:file:bg-zinc-700" />
-                </div>
-                <div class="flex items-center justify-end gap-2 pt-4 border-t border-zinc-800/80">
-                    <button type="button" onclick="closeProfileModal()" class="px-4 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 text-xs font-medium transition">Cancel</button>
-                    <button type="submit" class="px-4 py-2 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 text-xs font-semibold transition">Save Profile</button>
+                <div class="flex justify-end">
+                    <button type="submit" class="bg-zinc-100 hover:bg-white text-zinc-950 font-semibold text-xs px-4 py-2 rounded-lg transition">
+                        Save Identity
+                    </button>
                 </div>
             </form>
+
+            <!-- Section 2: Official LinkedIn Direct Publishing API -->
+            <div class="mt-6 pt-5 border-t border-zinc-800/80 space-y-3">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h4 class="text-xs font-semibold text-zinc-200">Official LinkedIn Direct Publishing API</h4>
+                        <p class="text-[11px] text-zinc-500 mt-0.5">OAuth 2.0 Access Token (`openid`, `profile`, `w_member_social`)</p>
+                    </div>
+                    <span id="modalLinkedinStatusBadge" class="mono text-[10px] px-2 py-0.5 rounded bg-zinc-900 text-zinc-400 border border-zinc-800">
+                        SANDBOX
+                    </span>
+                </div>
+
+                <div class="bg-[#09090b] border border-zinc-800/90 rounded-lg p-3 space-y-2.5">
+                    <input id="inputLinkedinToken" type="password" placeholder="Paste LINKEDIN_ACCESS_TOKEN (AQV...)"
+                        class="w-full bg-[#111113] border border-zinc-800 rounded-md px-3 py-2 text-xs text-zinc-100 mono focus:border-zinc-600 focus:outline-none">
+
+                    <div class="flex items-center justify-between gap-2">
+                        <p id="modalLinkedinStatusMsg" class="text-[11px] text-zinc-400 truncate">No token configured. Using Sandbox Simulation.</p>
+                        <button type="button" onclick="saveAndVerifyLinkedinToken()" id="verifyTokenBtn"
+                            class="shrink-0 bg-zinc-900 hover:bg-zinc-800 text-zinc-200 text-xs font-medium px-3 py-1.5 rounded-md border border-zinc-800 transition">
+                            Verify & Save Token
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Notification Toast -->
-    <div id="toast" class="fixed bottom-5 right-5 z-50 hidden px-4 py-3 rounded-xl bg-zinc-900/95 border border-zinc-700 text-xs font-medium text-zinc-100 shadow-2xl backdrop-blur-md"></div>
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50 hidden bg-zinc-900 border border-zinc-700 text-zinc-100 px-4 py-3 rounded-xl shadow-2xl text-xs flex items-center gap-2.5 max-w-sm">
+        <span id="toastDot" class="w-2 h-2 rounded-full bg-emerald-400 shrink-0"></span>
+        <span id="toastMsg">Ready</span>
+    </div>
 
     <script>
-        let currentDraftId = null;
-        let currentImagePath = "";
-        let cachedHistory = [];
-        let activeHistoryFilter = "all";
+        let currentDraftData = null;
+        let currentPostId = null;
+        let fullHistoryItems = [];
+        let activeHistoryFilter = 'all';
         let isPreviewExpanded = false;
-        let lastSeenNotifId = Number(localStorage.getItem("lastSeenNotifId") || 0);
+        let lastSeenSlotTrigger = null;
+        let linkedinConnected = false;
+        const PREVIEW_CHAR_LIMIT = 260;
 
-        if ("serviceWorker" in navigator) {
-            navigator.serviceWorker.register("/static/sw.js").catch((err) => {
-                console.warn("SW registration skipped:", err);
-            });
-        }
+        window.addEventListener('DOMContentLoaded', async () => {
+            registerServiceWorker();
+            updateBrowserPermUI();
+            await loadAppMeta();
+            await loadProfile();
+            await loadLinkedinStatus();
+            await loadSchedulerState();
+            await loadExistingDraft();
+            await loadHistory();
 
-        function showToast(msg) {
-            const toast = document.getElementById("toast");
-            toast.textContent = msg;
-            toast.classList.remove("hidden");
-            setTimeout(() => toast.classList.add("hidden"), 4500);
-        }
+            // Poll scheduler status every 20 seconds so autonomous background runs trigger desktop/PWA notifications
+            setInterval(pollSchedulerForUpdates, 20000);
+        });
 
-        async function fireNativeNotification(title, body, imageUrl) {
-            showToast(`${title} — ${body}`);
-            if (!("Notification" in window) || Notification.permission !== "granted") {
-                return;
-            }
+        async function loadAppMeta() {
             try {
-                if ("serviceWorker" in navigator) {
-                    const reg = await navigator.serviceWorker.ready;
-                    await reg.showNotification(title, {
-                        body: body,
-                        icon: "/static/avatar.jpg",
-                        image: imageUrl || undefined,
-                        badge: "/static/avatar.jpg"
-                    });
-                    return;
+                const res = await fetch('/api/meta');
+                const data = await res.json();
+                if (data.status === 'success' && data.short_version) {
+                    document.getElementById('appVersionBadge').textContent = data.short_version;
                 }
             } catch (e) {
-                console.warn("SW notification fallback:", e);
+                console.error('Meta load error:', e);
             }
-            new Notification(title, { body: body, icon: "/static/avatar.jpg" });
         }
 
-        async function enableBrowserNotifications() {
-            if (!("Notification" in window)) {
-                showToast("This browser does not support desktop notifications.");
+        async function loadLinkedinStatus() {
+            try {
+                const res = await fetch('/api/linkedin/status');
+                const data = await res.json();
+                if (data.status === 'success' && data.linkedin) {
+                    applyLinkedinStatusUI(data.linkedin);
+                }
+            } catch (e) {
+                console.error('LinkedIn status check error:', e);
+            }
+        }
+
+        function applyLinkedinStatusUI(info) {
+            linkedinConnected = Boolean(info.connected);
+            const dot = document.getElementById('linkedinModeDot');
+            const label = document.getElementById('linkedinModeLabel');
+            const hint = document.getElementById('publishModeHint');
+            const modalBadge = document.getElementById('modalLinkedinStatusBadge');
+            const modalMsg = document.getElementById('modalLinkedinStatusMsg');
+
+            if (info.connected) {
+                dot.className = "w-1.5 h-1.5 rounded-full bg-emerald-400";
+                label.textContent = "LIVE API";
+                label.className = "mono text-[10px] text-emerald-400";
+                hint.textContent = `Live Publishing → ${info.profile_name || 'LinkedIn'}`;
+                hint.className = "text-[10px] mono text-emerald-400";
+                modalBadge.textContent = "LIVE CONNECTED";
+                modalBadge.className = "mono text-[10px] px-2 py-0.5 rounded bg-emerald-950/60 text-emerald-300 border border-emerald-800/60";
+                modalMsg.textContent = `${info.profile_name} (${info.member_urn})`;
+            } else {
+                dot.className = "w-1.5 h-1.5 rounded-full bg-amber-400";
+                label.textContent = "SANDBOX";
+                label.className = "mono text-[10px] text-zinc-400";
+                hint.textContent = "Sandbox Mode (Click 'SANDBOX' in header to add token)";
+                hint.className = "text-[10px] mono text-zinc-500";
+                modalBadge.textContent = "SANDBOX";
+                modalBadge.className = "mono text-[10px] px-2 py-0.5 rounded bg-zinc-900 text-zinc-400 border border-zinc-800";
+                modalMsg.textContent = info.message || "Running in Sandbox Simulation Mode.";
+            }
+        }
+
+        async function saveAndVerifyLinkedinToken() {
+            const tokenInput = document.getElementById('inputLinkedinToken');
+            const btn = document.getElementById('verifyTokenBtn');
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = "Verifying...";
+
+            try {
+                const res = await fetch('/api/linkedin/token', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ access_token: tokenInput.value.trim() })
+                });
+                const data = await res.json();
+                if (data.status === 'success' && data.linkedin) {
+                    applyLinkedinStatusUI(data.linkedin);
+                    tokenInput.value = "";
+                    if (data.linkedin.connected) {
+                        showToast(`Connected to LinkedIn as ${data.linkedin.profile_name}`);
+                    } else {
+                        showToast(data.linkedin.message || "Switched to Sandbox Mode", true);
+                    }
+                }
+            } catch (e) {
+                showToast("Failed to verify LinkedIn token", true);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        }
+
+        function registerServiceWorker() {
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('/static/sw.js').catch(err => {
+                    console.warn('SW registration failed:', err);
+                });
+            }
+        }
+
+        function updateBrowserPermUI() {
+            const statusEl = document.getElementById('browserPermStatus');
+            const btnEl = document.getElementById('enablePushBtn');
+            if (!('Notification' in window)) {
+                statusEl.textContent = 'Web Notifications not supported in this browser';
+                btnEl.disabled = true;
+                return;
+            }
+            if (Notification.permission === 'granted') {
+                statusEl.textContent = 'Authorized — Native system alerts enabled';
+                btnEl.textContent = 'Authorized';
+            } else if (Notification.permission === 'denied') {
+                statusEl.textContent = 'Blocked — Enable notifications in browser site settings';
+                btnEl.textContent = 'Blocked';
+            } else {
+                statusEl.textContent = 'System notification permission required';
+                btnEl.textContent = 'Authorize';
+            }
+        }
+
+        async function requestNotificationPermission() {
+            if (!('Notification' in window)) {
+                showToast('Notifications not supported on this browser', true);
                 return;
             }
             const perm = await Notification.requestPermission();
-            updateNotifPermissionLabel();
-            if (perm === "granted") {
-                await fireNativeNotification(
-                    "LinkedIn Studio Alerts Enabled",
-                    "You will be notified 4x daily when new AI/ML drafts are ready."
-                );
+            updateBrowserPermUI();
+            if (perm === 'granted') {
+                triggerLocalNotification('LinkedIn AI Studio Alerts Active', 'You will receive alerts 4x/day at your peak LinkedIn posting slots.');
+                showToast('Native push notifications enabled');
             } else {
-                showToast("Notification permission was denied in browser settings.");
+                showToast('Notification permission was not granted', true);
             }
         }
 
-        function updateNotifPermissionLabel() {
-            const label = document.getElementById("notifPermissionStatus");
-            const dot = document.getElementById("notifBadgeDot");
-            const allowBtn = document.getElementById("enableAlertsBtn");
-
-            if (!("Notification" in window)) {
-                label.textContent = "Unsupported in this browser";
-                return;
-            }
-            if (Notification.permission === "granted") {
-                label.textContent = "Permission granted • Ready to receive alerts";
-                dot.className = "w-1.5 h-1.5 rounded-full bg-emerald-400";
-                allowBtn.classList.add("hidden");
-            } else if (Notification.permission === "denied") {
-                label.textContent = "Blocked in browser site permissions";
-                dot.className = "w-1.5 h-1.5 rounded-full bg-rose-400";
-                allowBtn.classList.remove("hidden");
-            } else {
-                label.textContent = "Click Allow to enable desktop & PWA notifications";
-                dot.className = "w-1.5 h-1.5 rounded-full bg-zinc-500";
-                allowBtn.classList.remove("hidden");
-            }
-        }
-
-        async function sendTestNotification() {
-            if ("Notification" in window && Notification.permission === "default") {
-                await Notification.requestPermission();
-                updateNotifPermissionLabel();
-            }
+        async function triggerLocalNotification(title, body) {
+            if (!('Notification' in window) || Notification.permission !== 'granted') return;
             try {
-                const res = await fetch("/api/scheduler/test-notification", { method: "POST" });
+                if ('serviceWorker' in navigator) {
+                    const reg = await navigator.serviceWorker.ready;
+                    if (reg && reg.showNotification) {
+                        await reg.showNotification(title, {
+                            body: body,
+                            icon: '/static/avatar.jpg',
+                            tag: 'linkedin-ai-agent-draft'
+                        });
+                        return;
+                    }
+                }
+                new Notification(title, { body: body });
+            } catch (e) {
+                console.warn('Notification error:', e);
+            }
+        }
+
+        async function loadSchedulerState() {
+            try {
+                const res = await fetch('/api/scheduler');
                 const data = await res.json();
-                if (data.notification) {
-                    lastSeenNotifId = data.notification.notif_id;
-                    localStorage.setItem("lastSeenNotifId", String(lastSeenNotifId));
-                    await fireNativeNotification(
-                        "LinkedIn Studio — Test Notification",
-                        "Daily 4x/day recurring automation is active.",
-                        data.notification.image_url
-                    );
+                if (data.status === 'success' && data.scheduler) {
+                    applySchedulerUI(data.scheduler);
                 }
             } catch (e) {
-                showToast("Failed to trigger test notification");
+                console.error('Scheduler load error:', e);
+            }
+        }
+
+        function applySchedulerUI(sched) {
+            const dot = document.getElementById('autoPilotDot');
+            const nextSlotBadge = document.getElementById('autoPilotNextSlot');
+
+            if (sched.enabled) {
+                dot.className = "w-2 h-2 rounded-full bg-emerald-400";
+                nextSlotBadge.textContent = `Next ${sched.next_slot_slt || '4x/day'}`;
+            } else {
+                dot.className = "w-2 h-2 rounded-full bg-zinc-600";
+                nextSlotBadge.textContent = "PAUSED";
+            }
+
+            document.getElementById('schedEnabledToggle').checked = Boolean(sched.enabled);
+            const times = sched.schedule_times || ["08:30", "12:30", "17:30", "21:00"];
+            document.getElementById('slotTime1').value = times[0] || "08:30";
+            document.getElementById('slotTime2').value = times[1] || "12:30";
+            document.getElementById('slotTime3').value = times[2] || "17:30";
+            document.getElementById('slotTime4').value = times[3] || "21:00";
+            document.getElementById('ntfyTopicInput').value = sched.ntfy_topic || "";
+
+            if (lastSeenSlotTrigger === null) {
+                lastSeenSlotTrigger = sched.last_triggered_slot || "";
+            }
+        }
+
+        async function pollSchedulerForUpdates() {
+            try {
+                const res = await fetch('/api/scheduler');
+                const data = await res.json();
+                if (data.status === 'success' && data.scheduler) {
+                    const sched = data.scheduler;
+                    applySchedulerUI(sched);
+
+                    if (sched.last_triggered_slot && sched.last_triggered_slot !== lastSeenSlotTrigger) {
+                        lastSeenSlotTrigger = sched.last_triggered_slot;
+                        const notif = sched.last_notification;
+                        if (notif) {
+                            triggerLocalNotification(
+                                `New AI/ML Draft Ready (${notif.slot})`,
+                                `${notif.title} (${notif.source}) — Click to review & publish`
+                            );
+                            showToast(`Auto-Pilot generated a new draft for ${notif.slot}`);
+                        }
+                        await loadExistingDraft();
+                        await loadHistory();
+                    }
+                }
+            } catch (e) {
+                // Silent background poll
             }
         }
 
         function openSchedulerModal() {
-            updateNotifPermissionLabel();
-            loadSchedulerStatus();
-            document.getElementById("schedulerModal").classList.remove("hidden");
+            updateBrowserPermUI();
+            const m = document.getElementById('schedulerModal');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
         }
 
         function closeSchedulerModal() {
-            document.getElementById("schedulerModal").classList.add("hidden");
+            const m = document.getElementById('schedulerModal');
+            m.classList.add('hidden');
+            m.classList.remove('flex');
         }
 
-        async function loadSchedulerStatus() {
-            try {
-                const res = await fetch("/api/scheduler");
-                const data = await res.json();
-                if (data.stats) updateStatsUI(data.stats);
-                if (!data.scheduler) return;
-
-                const sched = data.scheduler;
-                document.getElementById("schedEnabledToggle").checked = sched.enabled;
-                document.getElementById("schedNextSlotText").textContent = sched.enabled
-                    ? `${sched.next_slot}  •  Current: ${sched.current_slt}`
-                    : "Schedule paused";
-                document.getElementById("inputNtfyTopic").value = sched.ntfy_topic || "";
-
-                const times = sched.peak_times || ["08:30", "12:30", "17:30", "21:00"];
-                if (times[0]) document.getElementById("slotTime1").value = times[0];
-                if (times[1]) document.getElementById("slotTime2").value = times[1];
-                if (times[2]) document.getElementById("slotTime3").value = times[2];
-                if (times[3]) document.getElementById("slotTime4").value = times[3];
-
-                const dot = document.getElementById("autoPilotDot");
-                const label = document.getElementById("autoPilotLabel");
-                if (sched.enabled) {
-                    dot.className = "w-2 h-2 rounded-full bg-emerald-400";
-                    label.textContent = `Schedule (${times.length}x/d)`;
-                } else {
-                    dot.className = "w-2 h-2 rounded-full bg-zinc-600";
-                    label.textContent = "Schedule (Paused)";
-                }
-
-                const latestNotif = sched.latest_notification;
-                if (latestNotif && latestNotif.notif_id > lastSeenNotifId) {
-                    lastSeenNotifId = latestNotif.notif_id;
-                    localStorage.setItem("lastSeenNotifId", String(lastSeenNotifId));
-                    await fireNativeNotification(latestNotif.title, latestNotif.body, latestNotif.image_url);
-                    await loadLatestDraft();
-                }
-            } catch (e) {
-                console.error("Scheduler poll error:", e);
-            }
-        }
-
-        async function saveSchedulerSettings(event) {
-            event.preventDefault();
+        async function saveSchedulerSettings() {
             const payload = {
-                enabled: document.getElementById("schedEnabledToggle").checked,
-                peak_times: [
-                    document.getElementById("slotTime1").value,
-                    document.getElementById("slotTime2").value,
-                    document.getElementById("slotTime3").value,
-                    document.getElementById("slotTime4").value
+                enabled: document.getElementById('schedEnabledToggle').checked,
+                schedule_times: [
+                    document.getElementById('slotTime1').value || "08:30",
+                    document.getElementById('slotTime2').value || "12:30",
+                    document.getElementById('slotTime3').value || "17:30",
+                    document.getElementById('slotTime4').value || "21:00"
                 ],
-                ntfy_topic: document.getElementById("inputNtfyTopic").value.trim()
+                ntfy_topic: document.getElementById('ntfyTopicInput').value.trim()
             };
 
             try {
-                const res = await fetch("/api/scheduler", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
+                const res = await fetch('/api/scheduler', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
                 const data = await res.json();
-                if (data.status === "success") {
-                    await loadSchedulerStatus();
+                if (data.status === 'success') {
+                    applySchedulerUI(data.scheduler);
                     closeSchedulerModal();
-                    showToast("Daily recurring schedule updated");
+                    showToast('Daily 4x/day Auto-Pilot schedule updated');
                 }
             } catch (e) {
-                showToast("Failed to save schedule");
+                showToast('Failed to update scheduler settings', true);
             }
         }
 
-        function updateStatsUI(stats) {
-            if (!stats) return;
-            document.getElementById("statPublished").textContent = stats.total_published ?? 0;
-            document.getElementById("statDrafts").textContent = stats.total_drafts ?? 0;
-            document.getElementById("statSeenTopics").textContent = stats.unique_topics_seen ?? 0;
-            document.getElementById("navHistoryCount").textContent = stats.total_generated ?? 0;
-
-            document.getElementById("filterCountAll").textContent = stats.total_generated ?? 0;
-            document.getElementById("filterCountPublished").textContent = stats.total_published ?? 0;
-            document.getElementById("filterCountDraft").textContent = stats.total_drafts ?? 0;
-        }
-
-        function switchTab(tab) {
-            const studioSec = document.getElementById("studioTabSection");
-            const historySec = document.getElementById("historyTabSection");
-            const studioBtn = document.getElementById("tabStudioBtn");
-            const historyBtn = document.getElementById("tabHistoryBtn");
-
-            if (tab === "history") {
-                studioSec.classList.add("hidden");
-                historySec.classList.remove("hidden");
-                historyBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-medium bg-zinc-800 text-white shadow-sm transition flex items-center gap-2";
-                studioBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-medium text-zinc-400 hover:text-zinc-200 transition flex items-center gap-2";
-                loadHistory();
-            } else {
-                historySec.classList.add("hidden");
-                studioSec.classList.remove("hidden");
-                studioBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-medium bg-zinc-800 text-white shadow-sm transition flex items-center gap-2";
-                historyBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-medium text-zinc-400 hover:text-zinc-200 transition flex items-center gap-2";
-            }
-        }
-
-        function syncLivePreview() {
-            const fullText = document.getElementById("postEditor").value;
-            document.getElementById("charCounter").textContent = `${fullText.length} chars`;
-
-            const previewEl = document.getElementById("livePreviewText");
-            const toggleBtn = document.getElementById("toggleExpandBtn");
-
-            if (fullText.length > 320) {
-                toggleBtn.classList.remove("hidden");
-                if (isPreviewExpanded) {
-                    previewEl.textContent = fullText;
-                    toggleBtn.textContent = "see less";
+        async function sendTestAlert() {
+            await triggerLocalNotification(
+                'LinkedIn AI Studio: Peak Slot Alert',
+                'Your autonomous AI/ML draft is ready for review & approval!'
+            );
+            try {
+                const res = await fetch('/api/scheduler/test-notification', { method: 'POST' });
+                const data = await res.json();
+                if (data.ntfy_sent) {
+                    showToast('Test push sent to Browser & ntfy.sh mobile app!');
                 } else {
-                    previewEl.textContent = fullText.slice(0, 320).trim() + "…";
-                    toggleBtn.textContent = "…see more";
+                    showToast('Browser notification sent! (Set ntfy topic for mobile push)');
                 }
-            } else {
-                previewEl.textContent = fullText;
-                toggleBtn.classList.add("hidden");
+            } catch (e) {
+                showToast('Local notification triggered');
             }
         }
 
-        function togglePreviewExpand() {
-            isPreviewExpanded = !isPreviewExpanded;
-            syncLivePreview();
-        }
+        function switchMainTab(tab) {
+            const studioView = document.getElementById('studioView');
+            const historyView = document.getElementById('historyView');
+            const tabStudioBtn = document.getElementById('tabStudioBtn');
+            const tabHistoryBtn = document.getElementById('tabHistoryBtn');
 
-        async function copyPostText() {
-            const text = document.getElementById("postEditor").value;
-            await navigator.clipboard.writeText(text);
-            document.getElementById("copyBtnLabel").textContent = "Copied";
-            setTimeout(() => document.getElementById("copyBtnLabel").textContent = "Copy Text", 2000);
-        }
-
-        function applyProfileToUI(profile) {
-            document.getElementById("previewProfileName").textContent = profile.name;
-            document.getElementById("previewProfileHeadline").textContent = profile.headline;
-            document.getElementById("profileLinkPreview").href = profile.linkedin_url;
-
-            document.getElementById("inputProfileName").value = profile.name;
-            document.getElementById("inputProfileHeadline").value = profile.headline;
-            document.getElementById("inputProfileUrl").value = profile.linkedin_url;
-
-            const avatarImg = document.getElementById("previewAvatarImg");
-            const fallback = document.getElementById("previewAvatarFallback");
-            if (profile.avatar_url) {
-                avatarImg.src = profile.avatar_url;
-                avatarImg.classList.remove("hidden");
-                fallback.classList.add("hidden");
+            if (tab === 'studio') {
+                studioView.classList.remove('hidden');
+                historyView.classList.add('hidden');
+                tabStudioBtn.className = "px-3 py-1 rounded-md text-xs font-medium transition bg-zinc-800 text-zinc-100 shadow-sm";
+                tabHistoryBtn.className = "px-3 py-1 rounded-md text-xs font-medium transition text-zinc-400 hover:text-zinc-200 flex items-center gap-1.5";
             } else {
-                avatarImg.classList.add("hidden");
-                fallback.classList.remove("hidden");
+                studioView.classList.add('hidden');
+                historyView.classList.remove('hidden');
+                tabStudioBtn.className = "px-3 py-1 rounded-md text-xs font-medium transition text-zinc-400 hover:text-zinc-200";
+                tabHistoryBtn.className = "px-3 py-1 rounded-md text-xs font-medium transition bg-zinc-800 text-zinc-100 shadow-sm flex items-center gap-1.5";
+                loadHistory();
             }
+        }
+
+        function updateStatsRibbon(stats) {
+            if (!stats) return;
+            document.getElementById('statPublished').textContent = stats.total_published ?? 0;
+            document.getElementById('statDrafts').textContent = stats.total_drafts ?? 0;
+            document.getElementById('statSeen').textContent = stats.unique_topics_seen ?? 0;
+            document.getElementById('navHistoryCount').textContent = stats.total_generated ?? 0;
         }
 
         async function loadProfile() {
             try {
-                const res = await fetch("/api/profile");
+                const res = await fetch('/api/profile');
                 const data = await res.json();
-                if (data.profile) applyProfileToUI(data.profile);
+                if (data.status === 'success') {
+                    applyProfileToUI(data.profile, data.has_custom_avatar);
+                }
             } catch (e) {
-                console.error(e);
+                console.error('Profile load error:', e);
+            }
+        }
+
+        function applyProfileToUI(profile, hasAvatar) {
+            document.getElementById('navProfileName').textContent = profile.name;
+            document.getElementById('previewProfileLink').textContent = profile.name;
+            document.getElementById('previewProfileLink').href = profile.linkedin_url;
+            document.getElementById('previewHeadline').textContent = profile.headline;
+
+            document.getElementById('inputProfileName').value = profile.name;
+            document.getElementById('inputProfileHeadline').value = profile.headline;
+            document.getElementById('inputProfileUrl').value = profile.linkedin_url;
+
+            if (hasAvatar) {
+                const avatarSrc = profile.avatar_url || ('/static/avatar.jpg?t=' + Date.now());
+                const navImg = document.getElementById('navAvatarImg');
+                const prevImg = document.getElementById('previewAvatarImg');
+                navImg.src = avatarSrc;
+                navImg.style.display = 'block';
+                document.getElementById('navAvatarFallback').style.display = 'none';
+                prevImg.src = avatarSrc;
+                prevImg.style.display = 'block';
+                document.getElementById('previewAvatarFallback').style.display = 'none';
             }
         }
 
         function openProfileModal() {
-            document.getElementById("profileModal").classList.remove("hidden");
+            loadLinkedinStatus();
+            const m = document.getElementById('profileModal');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
         }
 
         function closeProfileModal() {
-            document.getElementById("profileModal").classList.add("hidden");
+            const m = document.getElementById('profileModal');
+            m.classList.add('hidden');
+            m.classList.remove('flex');
         }
 
-        async function saveProfile(event) {
-            event.preventDefault();
+        async function saveProfile(e) {
+            e.preventDefault();
             const formData = new FormData();
-            formData.append("name", document.getElementById("inputProfileName").value);
-            formData.append("headline", document.getElementById("inputProfileHeadline").value);
-            formData.append("linkedin_url", document.getElementById("inputProfileUrl").value);
+            formData.append('name', document.getElementById('inputProfileName').value);
+            formData.append('headline', document.getElementById('inputProfileHeadline').value);
+            formData.append('linkedin_url', document.getElementById('inputProfileUrl').value);
 
-            const fileInput = document.getElementById("inputProfileAvatar");
+            const fileInput = document.getElementById('inputProfileAvatar');
             if (fileInput.files.length > 0) {
-                formData.append("avatar", fileInput.files[0]);
+                formData.append('avatar', fileInput.files[0]);
             }
 
             try {
-                const res = await fetch("/api/profile", { method: "POST", body: formData });
+                const res = await fetch('/api/profile', { method: 'POST', body: formData });
                 const data = await res.json();
-                if (data.status === "success") {
-                    applyProfileToUI(data.profile);
-                    closeProfileModal();
-                    showToast("Profile updated");
+                if (data.status === 'success') {
+                    applyProfileToUI(data.profile, true);
+                    showToast('Author identity saved');
                 }
             } catch (err) {
-                showToast("Failed to update profile");
+                showToast('Failed to update profile', true);
             }
         }
 
-        function showEmptyStudio() {
-            currentDraftId = null;
-            document.getElementById("studioGrid").classList.add("hidden");
-            const empty = document.getElementById("emptyState");
-            empty.classList.remove("hidden");
-            empty.classList.add("flex");
-        }
-
-        function renderDraft(draft) {
-            if (!draft) {
-                showEmptyStudio();
-                return;
-            }
-            document.getElementById("emptyState").classList.add("hidden");
-            const grid = document.getElementById("studioGrid");
-            grid.classList.remove("hidden");
-            grid.classList.add("grid");
-
-            currentDraftId = draft.id || null;
-            document.getElementById("newsHeadline").textContent = draft.title;
-            document.getElementById("newsSourceBadge").textContent = draft.source || "AI NEWS";
-            document.getElementById("newsSourceLink").href = draft.link;
-            document.getElementById("draftCreatedTime").textContent = draft.created_at ? `• ${draft.created_at}` : "";
-            document.getElementById("postEditor").value = draft.post_text;
-            document.getElementById("postImage").src = draft.image_url;
-            document.getElementById("downloadImgBtn").href = draft.image_url;
-            currentImagePath = draft.image_path;
-
-            const statusBadge = document.getElementById("draftStatusBadge");
-            if (draft.status === "published") {
-                statusBadge.textContent = "Published";
-                statusBadge.className = "text-[11px] font-medium px-2.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/30";
-            } else {
-                statusBadge.textContent = "Draft";
-                statusBadge.className = "text-[11px] font-medium px-2.5 py-0.5 rounded-md bg-zinc-800 text-zinc-300 border border-zinc-700";
-            }
-
-            isPreviewExpanded = false;
-            syncLivePreview();
-        }
-
-        async function loadLatestDraft() {
+        async function loadExistingDraft() {
             try {
-                const res = await fetch("/api/draft");
-                const data = await res.json();
-                if (data.stats) updateStatsUI(data.stats);
-
-                if (data.status === "ready" && data.draft) {
-                    renderDraft(data.draft);
+                const res = await fetch('/api/draft');
+                const json = await res.json();
+                if (json.stats) updateStatsRibbon(json.stats);
+                if (json.status === 'success' && json.data) {
+                    renderDraft(json.data);
                 } else {
-                    showEmptyStudio();
+                    clearStudioWorkspace();
                 }
             } catch (e) {
-                console.error("Failed to load draft:", e);
+                console.error('Failed to load draft:', e);
+            }
+        }
+
+        function clearStudioWorkspace() {
+            currentDraftData = null;
+            currentPostId = null;
+            document.getElementById('postEditor').value = '';
+            document.getElementById('linkedinPreviewText').textContent = 'Click "Fetch New Unseen News" to generate a fresh AI/ML engineering post...';
+            document.getElementById('previewToggleMoreBtn').classList.add('hidden');
+            document.getElementById('newsSourceBox').classList.add('hidden');
+            document.getElementById('generatedImage').classList.add('hidden');
+            document.getElementById('imagePlaceholder').classList.remove('hidden');
+            document.getElementById('downloadCardBtn').classList.add('hidden');
+            document.getElementById('currentDraftStatusBadge').classList.add('hidden');
+            document.getElementById('regenerateBtn').disabled = true;
+            document.getElementById('deleteDraftBtn').disabled = true;
+            document.getElementById('charCount').textContent = '0 chars';
+        }
+
+        async function loadHistory() {
+            try {
+                const res = await fetch('/api/history?status=all');
+                const json = await res.json();
+                if (json.stats) updateStatsRibbon(json.stats);
+                fullHistoryItems = json.history || [];
+                renderFilteredHistory();
+            } catch (e) {
+                console.error('Failed to load history:', e);
             }
         }
 
         function setHistoryFilter(filterType) {
             activeHistoryFilter = filterType;
+            const btnAll = document.getElementById('filterAllBtn');
+            const btnPub = document.getElementById('filterPublishedBtn');
+            const btnDrf = document.getElementById('filterDraftBtn');
 
-            const allBtn = document.getElementById("filterAllBtn");
-            const pubBtn = document.getElementById("filterPublishedBtn");
-            const drfBtn = document.getElementById("filterDraftBtn");
+            const activeCls = "px-3 py-1 rounded-md text-xs font-medium transition bg-zinc-800 text-zinc-100";
+            const inactiveCls = "px-3 py-1 rounded-md text-xs font-medium transition text-zinc-400 hover:text-zinc-200";
 
-            const activeClass = "px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-white text-zinc-950 transition flex items-center gap-2";
-            const inactiveClass = "px-3.5 py-1.5 rounded-xl text-xs font-medium bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800 transition flex items-center gap-2";
+            btnAll.className = filterType === 'all' ? activeCls : inactiveCls;
+            btnPub.className = filterType === 'published' ? activeCls : inactiveCls;
+            btnDrf.className = filterType === 'draft' ? activeCls : inactiveCls;
 
-            allBtn.className = filterType === "all" ? activeClass : inactiveClass;
-            pubBtn.className = filterType === "published" ? activeClass : inactiveClass;
-            drfBtn.className = filterType === "draft" ? activeClass : inactiveClass;
-
-            renderHistoryCards();
+            renderFilteredHistory();
         }
 
-        async function loadHistory() {
-            try {
-                const res = await fetch("/api/history");
-                const data = await res.json();
-                if (data.stats) updateStatsUI(data.stats);
-                cachedHistory = data.history || [];
-                renderHistoryCards();
-            } catch (err) {
-                console.error("Failed to load history:", err);
-            }
-        }
+        function renderFilteredHistory() {
+            const container = document.getElementById('historyList');
+            const query = (document.getElementById('historySearchInput')?.value || '').toLowerCase().trim();
 
-        function renderHistoryCards() {
-            const listEl = document.getElementById("historyListGrid");
-            const emptyEl = document.getElementById("historyEmptyState");
-            const searchQuery = (document.getElementById("historySearchInput").value || "").toLowerCase().trim();
-
-            listEl.innerHTML = "";
-
-            const filtered = cachedHistory.filter((item) => {
-                const matchesStatus =
-                    activeHistoryFilter === "all" ||
-                    item.status === activeHistoryFilter;
-                const matchesQuery =
-                    !searchQuery ||
-                    item.title.toLowerCase().includes(searchQuery) ||
-                    item.source.toLowerCase().includes(searchQuery) ||
-                    item.post_text.toLowerCase().includes(searchQuery);
+            const filtered = fullHistoryItems.filter(item => {
+                const matchesStatus = activeHistoryFilter === 'all' || item.status === activeHistoryFilter;
+                const matchesQuery = !query ||
+                    (item.title && item.title.toLowerCase().includes(query)) ||
+                    (item.source && item.source.toLowerCase().includes(query));
                 return matchesStatus && matchesQuery;
             });
 
             if (filtered.length === 0) {
-                emptyEl.classList.remove("hidden");
+                container.innerHTML = `<p class="text-xs text-zinc-400 py-10 text-center col-span-full">No matching posts found in archive.</p>`;
                 return;
             }
-            emptyEl.classList.add("hidden");
 
-            filtered.forEach((item) => {
-                const isPub = item.status === "published";
+            container.innerHTML = filtered.map(item => {
+                const isPub = item.status === 'published';
+                const isSimulated = item.linkedin_urn && item.linkedin_urn.includes('simulated');
                 const badgeClass = isPub
-                    ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
-                    : "bg-zinc-900/90 text-zinc-300 border-zinc-700";
-                const badgeLabel = isPub ? "Published" : "Draft";
+                    ? 'bg-emerald-950/80 text-emerald-300 border-emerald-800/70'
+                    : 'bg-zinc-800/90 text-zinc-300 border-zinc-700';
+                const badgeLabel = isPub ? (isSimulated ? 'SANDBOX PUB' : 'LIVE PUBLISHED') : 'DRAFT';
+                const dateStr = new Date(item.created_at).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                const safeTitle = (item.title || '').replace(/"/g, '&quot;');
 
-                const card = document.createElement("div");
-                card.className = "studio-surface rounded-2xl overflow-hidden flex flex-col justify-between transition hover:border-zinc-700";
-                card.innerHTML = `
-                    <div>
-                        <div class="relative aspect-square w-full bg-zinc-950 border-b border-zinc-800/80 overflow-hidden">
-                            <img src="${item.image_url}" alt="Card" class="w-full h-full object-cover" />
-                            <div class="absolute top-3 left-3 right-3 flex items-center justify-between gap-2">
-                                <span class="text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-md bg-black/75 backdrop-blur-md text-zinc-200 border border-white/10 truncate">
-                                    ${item.source}
-                                </span>
-                                <span class="text-[10px] font-semibold px-2.5 py-1 rounded-md backdrop-blur-md border ${badgeClass}">
-                                    ${badgeLabel}
-                                </span>
+                return `
+                    <div class="bg-[#09090b] border border-zinc-800/90 hover:border-zinc-700 rounded-xl p-4 flex flex-col justify-between gap-3 transition group">
+                        <div class="flex items-start gap-3.5">
+                            <img src="${item.image_url}" onclick='loadItemIntoStudio(${JSON.stringify(item).replace(/'/g, "&#39;")})'
+                                class="w-20 h-20 rounded-lg object-cover border border-zinc-800 shrink-0 bg-zinc-900 cursor-pointer hover:opacity-90 transition">
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center justify-between gap-2 mb-1.5">
+                                    <span class="mono text-[10px] px-2 py-0.5 rounded border ${badgeClass}">${badgeLabel}</span>
+                                    <span class="mono text-[10px] text-zinc-400">${dateStr}</span>
+                                </div>
+                                <p onclick='loadItemIntoStudio(${JSON.stringify(item).replace(/'/g, "&#39;")})'
+                                    class="text-xs font-medium text-zinc-100 line-clamp-2 leading-snug cursor-pointer hover:text-white" title="${safeTitle}">
+                                    ${item.title}
+                                </p>
+                                <span class="text-[11px] text-zinc-400 mt-1 block">${item.source}</span>
                             </div>
                         </div>
 
-                        <div class="p-4">
-                            <h3 class="text-sm font-semibold text-white line-clamp-2 leading-snug">${item.title}</h3>
-                            <p class="text-xs text-zinc-400 line-clamp-3 mt-2 leading-relaxed wrap-anywhere">${item.post_text}</p>
-                        </div>
-                    </div>
-
-                    <div class="px-4 py-3 border-t border-zinc-800/80 bg-[#0d0d10] flex items-center justify-between gap-2">
-                        <span class="text-[11px] font-mono text-zinc-500">${item.created_at}</span>
-                        <div class="flex items-center gap-2">
-                            <button onclick="deletePostById(${item.id})" title="Delete this post" class="p-1.5 rounded-lg bg-zinc-900 hover:bg-rose-950/50 text-zinc-400 hover:text-rose-400 border border-zinc-800 transition">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                </svg>
+                        <div class="pt-3 border-t border-zinc-800/60 flex items-center justify-between gap-2">
+                            <button onclick='loadItemIntoStudio(${JSON.stringify(item).replace(/'/g, "&#39;")})'
+                                class="text-xs font-medium text-zinc-300 hover:text-white bg-zinc-900 hover:bg-zinc-800 px-3 py-1.5 rounded-lg border border-zinc-800 transition">
+                                Open in Studio
                             </button>
-                            <button onclick="openHistoryItemById(${item.id})" class="px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs font-medium text-white transition">
-                                Open in Studio →
+                            <button onclick="deletePostById(${item.id}, event)"
+                                class="text-xs text-zinc-400 hover:text-red-300 hover:bg-red-950/40 px-2.5 py-1.5 rounded-lg border border-transparent hover:border-red-900/50 transition">
+                                Delete
                             </button>
                         </div>
                     </div>
                 `;
-                listEl.appendChild(card);
+            }).join('');
+        }
+
+        function loadItemIntoStudio(item) {
+            renderDraft({
+                post_id: item.id,
+                news: {
+                    title: item.title,
+                    source: item.source,
+                    link: item.link,
+                    summary: ""
+                },
+                post_text: item.post_text,
+                image_url: item.image_url,
+                image_path: item.image_path,
+                record_status: item.status
             });
+            switchMainTab('studio');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        function openHistoryItemById(postId) {
-            const item = cachedHistory.find((p) => p.id === postId);
-            if (!item) return;
-            renderDraft(item);
-            switchTab("studio");
-            showToast("Loaded selected post into Studio");
+        async function deleteCurrentStudioDraft() {
+            if (!currentPostId) return;
+            await deletePostById(currentPostId);
         }
 
-        async function deletePostById(postId) {
+        async function deletePostById(postId, event) {
+            if (event) event.stopPropagation();
             try {
-                const res = await fetch(`/api/history/${postId}`, { method: "DELETE" });
-                const data = await res.json();
-                if (data.status === "success") {
-                    if (data.stats) updateStatsUI(data.stats);
-                    cachedHistory = cachedHistory.filter((p) => p.id !== postId);
-                    renderHistoryCards();
+                const res = await fetch(`/api/history/${postId}`, { method: 'DELETE' });
+                const json = await res.json();
+                if (!res.ok) throw new Error(json.detail || 'Delete failed');
 
-                    if (currentDraftId === postId) {
-                        renderDraft(data.next_draft);
-                    }
-                    showToast("Draft deleted (Topic remains locked in seen_topics)");
-                }
-            } catch (e) {
-                showToast("Failed to delete post");
-            }
-        }
-
-        async function discardCurrentDraft() {
-            if (!currentDraftId) return;
-            await deletePostById(currentDraftId);
-        }
-
-        async function clearAllUnwantedDrafts() {
-            try {
-                const res = await fetch("/api/history/drafts/clear", { method: "DELETE" });
-                const data = await res.json();
-                if (data.status === "success") {
-                    if (data.stats) updateStatsUI(data.stats);
-                    await loadHistory();
-                    renderDraft(data.next_draft);
-                    showToast(`Cleared ${data.deleted_count} unpublished draft(s)`);
-                }
-            } catch (e) {
-                showToast("Failed to clear drafts");
-            }
-        }
-
-        async function generatePost() {
-            const loading = document.getElementById("loadingState");
-            const empty = document.getElementById("emptyState");
-            const grid = document.getElementById("studioGrid");
-            const btnText = document.getElementById("genBtnText");
-            const genIcon = document.getElementById("genIcon");
-
-            switchTab("studio");
-            empty.classList.add("hidden");
-            grid.classList.add("hidden");
-            loading.classList.remove("hidden");
-            loading.classList.add("flex");
-            btnText.textContent = "Generating...";
-            genIcon.classList.add("animate-spin");
-
-            try {
-                const res = await fetch("/api/generate", { method: "POST" });
-                const data = await res.json();
-                if (data.status === "success") {
-                    renderDraft(data.draft);
-                    if (data.stats) updateStatsUI(data.stats);
-                    showToast("New AI/ML draft ready in Studio");
+                if (json.stats) updateStatsRibbon(json.stats);
+                if (json.latest) {
+                    renderDraft({
+                        post_id: json.latest.id,
+                        news: {
+                            title: json.latest.title,
+                            source: json.latest.source,
+                            link: json.latest.link,
+                            summary: ""
+                        },
+                        post_text: json.latest.post_text,
+                        image_url: json.latest.image_url,
+                        image_path: json.latest.image_path,
+                        record_status: json.latest.status
+                    });
                 } else {
-                    showToast("Generation error: " + (data.detail || "Unknown error"));
+                    clearStudioWorkspace();
                 }
+
+                await loadHistory();
+                showToast('Removed from archive (topic kept in memory to prevent repeats)');
             } catch (e) {
-                showToast("Network error while contacting AI Agent");
-            } finally {
-                loading.classList.add("hidden");
-                loading.classList.remove("flex");
-                btnText.textContent = "Fetch Latest News";
-                genIcon.classList.remove("animate-spin");
+                showToast(e.message, true);
             }
         }
 
-        async function publishPost() {
-            const postText = document.getElementById("postEditor").value;
-            const publishBtn = document.getElementById("publishBtn");
-            publishBtn.disabled = true;
-            publishBtn.innerHTML = "<span>Publishing...</span>";
+        async function clearAllDrafts() {
+            try {
+                const res = await fetch('/api/history/drafts/clear', { method: 'DELETE' });
+                const json = await res.json();
+                if (!res.ok) throw new Error(json.detail || 'Clear drafts failed');
+
+                if (json.stats) updateStatsRibbon(json.stats);
+                if (json.latest) {
+                    renderDraft({
+                        post_id: json.latest.id,
+                        news: {
+                            title: json.latest.title,
+                            source: json.latest.source,
+                            link: json.latest.link,
+                            summary: ""
+                        },
+                        post_text: json.latest.post_text,
+                        image_url: json.latest.image_url,
+                        image_path: json.latest.image_path,
+                        record_status: json.latest.status
+                    });
+                } else {
+                    clearStudioWorkspace();
+                }
+
+                await loadHistory();
+                showToast(`Cleared ${json.removed_count} unpublished draft(s)`);
+            } catch (e) {
+                showToast(e.message, true);
+            }
+        }
+
+        async function generateNewDraft() {
+            const btn = document.getElementById('generateBtn');
+            const btnText = document.getElementById('generateBtnText');
+            const icon = document.getElementById('generateIcon');
+
+            btn.disabled = true;
+            btnText.textContent = 'Scanning 24h AI Feeds...';
+            icon.classList.add('animate-spin');
+            setAgentStatus('WORKING', 'bg-amber-400 animate-SubtlePulse');
 
             try {
-                const res = await fetch("/api/publish", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
+                const res = await fetch('/api/generate', { method: 'POST' });
+                const json = await res.json();
+                if (!res.ok) throw new Error(json.detail || 'Generation failed');
+
+                renderDraft(json.data);
+                if (json.stats) updateStatsRibbon(json.stats);
+                await loadHistory();
+                setAgentStatus('READY', 'bg-emerald-400');
+                showToast('Fresh unseen AI/ML news synthesized');
+            } catch (err) {
+                setAgentStatus('ERROR', 'bg-red-500');
+                showToast(err.message, true);
+            } finally {
+                btn.disabled = false;
+                btnText.textContent = 'Fetch New Unseen News';
+                icon.classList.remove('animate-spin');
+            }
+        }
+
+        async function regenerateCurrentDraft() {
+            if (!currentDraftData || !currentDraftData.news) return;
+
+            const btn = document.getElementById('regenerateBtn');
+            const icon = document.getElementById('regenerateIcon');
+            btn.disabled = true;
+            icon.classList.add('animate-spin');
+            setAgentStatus('RE-SYNTHESIZING', 'bg-amber-400 animate-SubtlePulse');
+
+            try {
+                const res = await fetch('/api/regenerate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        post_id: currentDraftId,
-                        post_text: postText,
-                        image_path: currentImagePath
+                        post_id: currentPostId,
+                        title: currentDraftData.news.title,
+                        link: currentDraftData.news.link,
+                        source: currentDraftData.news.source,
+                        summary: currentDraftData.news.summary || ''
                     })
                 });
-                const data = await res.json();
-                if (data.status === "published") {
-                    if (data.stats) updateStatsUI(data.stats);
-                    const statusBadge = document.getElementById("draftStatusBadge");
-                    statusBadge.textContent = "Published";
-                    statusBadge.className = "text-[11px] font-medium px-2.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/30";
-                    showToast(data.message);
-                }
-            } catch (e) {
-                showToast("Failed to publish post");
+                const json = await res.json();
+                if (!res.ok) throw new Error(json.detail || 'Regeneration failed');
+
+                renderDraft(json.data);
+                if (json.stats) updateStatsRibbon(json.stats);
+                await loadHistory();
+                setAgentStatus('READY', 'bg-emerald-400');
+                showToast('Post & Liquid Glass visual regenerated');
+            } catch (err) {
+                setAgentStatus('ERROR', 'bg-red-500');
+                showToast(err.message, true);
             } finally {
-                publishBtn.disabled = false;
-                publishBtn.innerHTML = `
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                    <span>Approve & Publish to LinkedIn</span>
-                `;
+                btn.disabled = false;
+                icon.classList.remove('animate-spin');
             }
         }
 
-        window.addEventListener("DOMContentLoaded", () => {
-            loadProfile();
-            loadLatestDraft();
-            loadSchedulerStatus();
-            setInterval(loadSchedulerStatus, 20000);
-        });
+        function renderDraft(data) {
+            currentDraftData = data;
+            currentPostId = data.post_id || null;
+            isPreviewExpanded = false;
+
+            document.getElementById('regenerateBtn').disabled = false;
+            document.getElementById('deleteDraftBtn').disabled = !currentPostId;
+
+            const statusBadge = document.getElementById('currentDraftStatusBadge');
+            statusBadge.classList.remove('hidden');
+            if (data.record_status === 'published') {
+                statusBadge.textContent = 'PUBLISHED';
+                statusBadge.className = 'mono text-[10px] uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-950/90 text-emerald-300 border border-emerald-800/70';
+            } else {
+                statusBadge.textContent = 'DRAFT';
+                statusBadge.className = 'mono text-[10px] uppercase tracking-wider px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 border border-zinc-700';
+            }
+
+            if (data.news) {
+                document.getElementById('newsSourceBox').classList.remove('hidden');
+                document.getElementById('newsSourceTag').textContent = data.news.source || 'AI NEWS';
+                document.getElementById('newsTitle').textContent = data.news.title || '';
+                document.getElementById('newsLink').href = data.news.link || '#';
+            }
+
+            const editor = document.getElementById('postEditor');
+            editor.value = data.post_text || '';
+            syncEditorToPreview();
+
+            if (data.image_url) {
+                const img = document.getElementById('generatedImage');
+                const placeholder = document.getElementById('imagePlaceholder');
+                const dlBtn = document.getElementById('downloadCardBtn');
+                img.src = data.image_url;
+                img.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+                dlBtn.href = data.image_url;
+                dlBtn.classList.remove('hidden');
+            }
+        }
+
+        function syncEditorToPreview() {
+            const text = document.getElementById('postEditor').value;
+            const previewEl = document.getElementById('linkedinPreviewText');
+            const toggleBtn = document.getElementById('previewToggleMoreBtn');
+
+            document.getElementById('charCount').textContent = `${text.length} chars`;
+
+            if (!text) {
+                previewEl.textContent = 'Your generated LinkedIn post will render here...';
+                toggleBtn.classList.add('hidden');
+                return;
+            }
+
+            if (text.length > PREVIEW_CHAR_LIMIT && !isPreviewExpanded) {
+                previewEl.textContent = text.slice(0, PREVIEW_CHAR_LIMIT).trimEnd() + '…';
+                toggleBtn.textContent = '…see more';
+                toggleBtn.classList.remove('hidden');
+            } else if (text.length > PREVIEW_CHAR_LIMIT && isPreviewExpanded) {
+                previewEl.textContent = text;
+                toggleBtn.textContent = 'see less';
+                toggleBtn.classList.remove('hidden');
+            } else {
+                previewEl.textContent = text;
+                toggleBtn.classList.add('hidden');
+            }
+        }
+
+        function togglePreviewExpand() {
+            isPreviewExpanded = !isPreviewExpanded;
+            syncEditorToPreview();
+        }
+
+        function copyPostText() {
+            const text = document.getElementById('postEditor').value;
+            if (!text) return;
+            navigator.clipboard.writeText(text);
+            showToast('Post copy copied to clipboard');
+        }
+
+        async function approveAndPublish() {
+            const finalText = document.getElementById('postEditor').value.trim();
+            if (!finalText) {
+                showToast('Generate or write a post before publishing', true);
+                return;
+            }
+
+            const publishBtn = document.getElementById('publishBtn');
+            const publishBtnText = document.getElementById('publishBtnText');
+            const originalText = publishBtnText.textContent;
+            publishBtn.disabled = true;
+            publishBtnText.textContent = linkedinConnected ? 'Publishing to LinkedIn...' : 'Recording Sandbox Publish...';
+
+            try {
+                const res = await fetch('/api/publish', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        post_id: currentPostId,
+                        final_text: finalText
+                    })
+                });
+                const json = await res.json();
+                if (!res.ok) throw new Error(json.detail || 'Publish failed');
+
+                if (json.stats) updateStatsRibbon(json.stats);
+                if (currentDraftData) {
+                    currentDraftData.record_status = 'published';
+                    renderDraft(currentDraftData);
+                }
+                await loadHistory();
+                setAgentStatus('PUBLISHED', 'bg-emerald-400');
+                showToast(json.message || 'Post marked as Published');
+            } catch (err) {
+                showToast(err.message, true);
+            } finally {
+                publishBtn.disabled = false;
+                publishBtnText.textContent = originalText;
+            }
+        }
+
+        function setAgentStatus(label, dotClasses) {
+            document.getElementById('statusText').textContent = label;
+            document.getElementById('statusDot').className = `w-1.5 h-1.5 rounded-full ${dotClasses}`;
+        }
+
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('toast');
+            const dot = document.getElementById('toastDot');
+            const msg = document.getElementById('toastMsg');
+
+            msg.textContent = message;
+            dot.className = `w-2 h-2 rounded-full shrink-0 ${isError ? 'bg-red-500' : 'bg-emerald-400'}`;
+            toast.classList.remove('hidden');
+
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 3500);
+        }
     </script>
 </body>
 </html>

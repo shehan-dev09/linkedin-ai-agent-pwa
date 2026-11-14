@@ -1,12 +1,16 @@
 # Virtual Environment
 venv/
 __pycache__/
+*.pyc
 
 # Environment Variables (Secret Keys)
 .env
 
 # Generated Images
 static/generated_images/*.jpg
+static/generated_images/*.png
+static/generated_images/*.json
+
 
 #profile data
 static/avatar.jpg
@@ -17,3 +21,5 @@ static/agent_history.db
 
 #Scheduler Config
 static/scheduler_config.json
+
+.linkedin_token.json
