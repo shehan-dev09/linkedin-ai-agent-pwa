@@ -18,6 +18,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
 
     <style>
+        :root {
+            color-scheme: dark;
+        }
         * {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             box-sizing: border-box;
@@ -27,7 +30,6 @@
         }
         body {
             background-color: #09090b;
-            background-image: radial-gradient(circle at 50% 0%, rgba(14, 165, 233, 0.06), transparent 45%);
             color: #f4f4f5;
             margin: 0;
             -webkit-tap-highlight-color: transparent;
@@ -47,9 +49,9 @@
             background: #3f3f46;
         }
         .studio-surface {
-            background-color: #111114;
-            border: 1px solid #232329;
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+            background-color: #111113;
+            border: 1px solid #222226;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
         }
         .linkedin-card {
             background-color: #1b1f23;
@@ -59,6 +61,10 @@
         .wrap-anywhere {
             overflow-wrap: anywhere;
             word-break: break-word;
+        }
+        input[type="time"]::-webkit-calendar-picker-indicator {
+            filter: invert(0.7);
+            cursor: pointer;
         }
     </style>
 </head>
@@ -76,9 +82,9 @@
                     </div>
                     <div>
                         <div class="flex items-center gap-2">
-                            <h1 class="text-sm font-semibold tracking-tight text-white">LinkedIn AI Studio</h1>
-                            <span class="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-400 border border-sky-500/20 hidden sm:inline">
-                                v1.3 • 24h Live Feed
+                            <h1 class="text-sm font-semibold tracking-tight text-white">LinkedIn Studio</h1>
+                            <span class="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-zinc-900 text-zinc-400 border border-zinc-800 hidden sm:inline">
+                                AI/ML Pipeline
                             </span>
                         </div>
                         <p class="text-xs text-zinc-400 hidden sm:block">Shehan Nadeesha • Autonomous Content Workbench</p>
@@ -88,10 +94,10 @@
                 <!-- Segmented Navigation Tabs -->
                 <nav class="flex items-center bg-[#121215] p-1 rounded-xl border border-zinc-800/90">
                     <button id="tabStudioBtn" onclick="switchTab('studio')" class="px-3.5 py-1.5 rounded-lg text-xs font-medium bg-zinc-800 text-white shadow-sm transition flex items-center gap-2">
-                        <svg class="w-3.5 h-3.5 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-3.5 h-3.5 text-zinc-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                         </svg>
-                        <span>Studio Workbench</span>
+                        <span>Studio</span>
                     </button>
                     <button id="tabHistoryBtn" onclick="switchTab('history')" class="px-3.5 py-1.5 rounded-lg text-xs font-medium text-zinc-400 hover:text-zinc-200 transition flex items-center gap-2">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -103,34 +109,40 @@
                 </nav>
             </div>
 
-            <!-- Compact Telemetry Pills + Primary Actions -->
-            <div class="flex items-center gap-3">
+            <!-- Compact Telemetry Pills + Schedule + Primary Actions -->
+            <div class="flex items-center gap-2.5">
                 <!-- Inline Telemetry Ribbon (Desktop) -->
                 <div class="hidden xl:flex items-center gap-4 px-3.5 py-1.5 rounded-xl bg-[#121215] border border-zinc-800/80 text-xs">
                     <div class="flex items-center gap-2" title="Published LinkedIn Posts">
-                        <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-                        <span class="text-zinc-400">Published:</span>
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                        <span class="text-zinc-400">Published</span>
                         <span id="statPublished" class="font-mono font-semibold text-white">0</span>
                     </div>
                     <div class="w-px h-3.5 bg-zinc-800"></div>
                     <div class="flex items-center gap-2" title="Saved Drafts in Queue">
-                        <span class="w-2 h-2 rounded-full bg-sky-400"></span>
-                        <span class="text-zinc-400">Drafts:</span>
+                        <span class="w-1.5 h-1.5 rounded-full bg-sky-400"></span>
+                        <span class="text-zinc-400">Drafts</span>
                         <span id="statDrafts" class="font-mono font-semibold text-white">0</span>
                     </div>
                     <div class="w-px h-3.5 bg-zinc-800"></div>
                     <div class="flex items-center gap-2" title="Unique News Topics Locked (Never Repeats)">
-                        <span class="w-2 h-2 rounded-full bg-amber-400"></span>
-                        <span class="text-zinc-400">Seen News:</span>
-                        <span id="statSeenTopics" class="font-mono font-semibold text-amber-400">0</span>
+                        <span class="w-1.5 h-1.5 rounded-full bg-zinc-400"></span>
+                        <span class="text-zinc-400">Seen</span>
+                        <span id="statSeenTopics" class="font-mono font-semibold text-zinc-200">0</span>
                     </div>
                 </div>
 
+                <!-- Clean Monochrome Schedule Button -->
+                <button onclick="openSchedulerModal()" class="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#121215] hover:bg-zinc-800/80 border border-zinc-800 text-xs font-medium text-zinc-200 transition" title="Configure Daily Auto-Pilot Schedule">
+                    <span id="autoPilotDot" class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                    <span id="autoPilotLabel" class="hidden sm:inline">Schedule (4x/d)</span>
+                </button>
+
                 <button onclick="openProfileModal()" class="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#121215] hover:bg-zinc-800/80 border border-zinc-800 text-xs font-medium text-zinc-300 transition">
-                    <svg class="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
-                    <span class="hidden sm:inline">Profile</span>
+                    <span class="hidden md:inline">Profile</span>
                 </button>
 
                 <button id="generateTopBtn" onclick="generatePost()" class="flex items-center gap-2 px-4 py-2 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 font-semibold text-xs transition shadow-sm active:scale-[0.98]">
@@ -148,9 +160,9 @@
 
         <!-- Loading State -->
         <div id="loadingState" class="hidden py-28 flex-col items-center justify-center text-center">
-            <div class="w-11 h-11 border-2 border-zinc-800 border-t-sky-400 rounded-full animate-spin mb-4"></div>
+            <div class="w-10 h-10 border-2 border-zinc-800 border-t-white rounded-full animate-spin mb-4"></div>
             <h2 class="text-sm font-semibold text-zinc-100">Fetching Latest Unseen AI/ML Breakthrough...</h2>
-            <p class="text-xs text-zinc-400 mt-1.5 max-w-md">Filtering out previously seen headlines in SQLite, generating AI/ML Engineer insights, and rendering Liquid Glass visual card.</p>
+            <p class="text-xs text-zinc-500 mt-1.5 max-w-md">Verifying topic uniqueness in SQLite, drafting technical analysis, and rendering 1080x1080 Liquid Glass card.</p>
         </div>
 
         <!-- TAB 1: STUDIO WORKBENCH VIEW -->
@@ -158,14 +170,14 @@
 
             <!-- Empty State -->
             <div id="emptyState" class="hidden py-24 studio-surface rounded-2xl flex-col items-center justify-center text-center px-4">
-                <div class="w-12 h-12 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center mb-4 text-sky-400">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="w-11 h-11 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center mb-4 text-zinc-400">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path>
                     </svg>
                 </div>
                 <h2 class="text-base font-semibold text-white">No Active Draft in Studio</h2>
-                <p class="text-xs text-zinc-400 mt-1.5 mb-6 max-w-sm">Click below to scan the last 24 hours of AI/ML news and generate a fresh, deduplicated LinkedIn draft.</p>
-                <button onclick="generatePost()" class="px-5 py-2.5 rounded-xl bg-[#0A66C2] hover:bg-[#004182] text-white font-semibold text-xs transition shadow-md">
+                <p class="text-xs text-zinc-400 mt-1.5 mb-6 max-w-sm">Scan the last 24 hours of AI/ML news now or let the daily scheduler generate drafts automatically.</p>
+                <button onclick="generatePost()" class="px-5 py-2.5 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 font-semibold text-xs transition">
                     Generate Fresh Post
                 </button>
             </div>
@@ -180,7 +192,7 @@
                     <div class="studio-surface rounded-2xl p-5">
                         <div class="flex flex-wrap items-center justify-between gap-2 mb-2.5">
                             <div class="flex items-center gap-2">
-                                <span id="newsSourceBadge" class="text-[11px] font-semibold uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-sky-500/10 text-sky-400 border border-sky-500/20">
+                                <span id="newsSourceBadge" class="text-[11px] font-semibold uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-zinc-900 text-zinc-300 border border-zinc-800">
                                     AI RESEARCH
                                 </span>
                                 <span id="draftStatusBadge" class="text-[11px] font-medium px-2.5 py-0.5 rounded-md bg-zinc-800 text-zinc-300 border border-zinc-700">
@@ -189,8 +201,8 @@
                                 <span id="draftCreatedTime" class="text-[11px] font-mono text-zinc-500 hidden sm:inline"></span>
                             </div>
 
-                            <a id="newsSourceLink" href="#" target="_blank" rel="noopener noreferrer" class="text-xs font-medium text-zinc-400 hover:text-sky-400 flex items-center gap-1.5 transition">
-                                <span>Verify Original Source</span>
+                            <a id="newsSourceLink" href="#" target="_blank" rel="noopener noreferrer" class="text-xs font-medium text-zinc-400 hover:text-white flex items-center gap-1.5 transition">
+                                <span>Original Source</span>
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
                                 </svg>
@@ -209,12 +221,11 @@
                                 <label for="postEditor" class="text-xs font-semibold uppercase tracking-wider text-zinc-300">
                                     Post Copy Editor
                                 </label>
-                                <span class="text-[11px] text-zinc-500 hidden sm:inline">• Syncs live with LinkedIn preview</span>
                             </div>
 
                             <div class="flex items-center gap-3">
-                                <span id="charCounter" class="text-xs text-zinc-400 font-mono">0 chars</span>
-                                <button onclick="copyPostText()" class="text-xs text-zinc-300 hover:text-white flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-800/90 hover:bg-zinc-700 border border-zinc-700/80 transition">
+                                <span id="charCounter" class="text-xs text-zinc-500 font-mono">0 chars</span>
+                                <button onclick="copyPostText()" class="text-xs text-zinc-300 hover:text-white flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 transition">
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
                                     </svg>
@@ -227,7 +238,7 @@
                             id="postEditor"
                             rows="15"
                             oninput="syncLivePreview()"
-                            class="w-full bg-[#09090b] text-zinc-100 text-[14px] leading-relaxed p-4 rounded-xl border border-zinc-800/90 focus:outline-none focus:border-sky-500/80 transition resize-y"
+                            class="w-full bg-[#09090b] text-zinc-100 text-[14px] leading-relaxed p-4 rounded-xl border border-zinc-800/90 focus:outline-none focus:border-zinc-600 transition resize-y"
                             placeholder="Write or refine your LinkedIn post..."
                         ></textarea>
 
@@ -235,24 +246,24 @@
                         <div class="flex flex-wrap items-center justify-between gap-3 mt-4 pt-4 border-t border-zinc-800/80">
                             <div class="flex flex-wrap items-center gap-2">
                                 <button onclick="generatePost()" class="px-3.5 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border border-zinc-800 font-medium text-xs flex items-center gap-2 transition">
-                                    <svg class="w-3.5 h-3.5 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg class="w-3.5 h-3.5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path>
                                     </svg>
                                     <span>Skip to Next News</span>
                                 </button>
 
                                 <a id="downloadImgBtn" href="#" download="linkedin_visual.jpg" class="px-3.5 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 font-medium text-xs flex items-center gap-1.5 transition">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg class="w-3.5 h-3.5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
                                     </svg>
                                     <span>Download Card</span>
                                 </a>
 
-                                <button onclick="discardCurrentDraft()" title="Delete this draft permanently" class="px-3.5 py-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 font-medium text-xs flex items-center gap-1.5 transition">
+                                <button onclick="discardCurrentDraft()" title="Delete this draft permanently" class="px-3.5 py-2.5 rounded-xl bg-zinc-900 hover:bg-rose-950/40 text-zinc-400 hover:text-rose-400 border border-zinc-800 hover:border-rose-900/50 font-medium text-xs flex items-center gap-1.5 transition">
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                                     </svg>
-                                    <span>Discard Draft</span>
+                                    <span>Discard</span>
                                 </button>
                             </div>
 
@@ -270,7 +281,7 @@
                 <div class="lg:col-span-5 lg:sticky lg:top-24">
                     <div class="flex items-center justify-between mb-2.5 px-1">
                         <span class="text-xs font-semibold uppercase tracking-wider text-zinc-400">Live LinkedIn Feed Preview</span>
-                        <a id="profileLinkPreview" href="https://www.linkedin.com/in/shehan-nadeesha/" target="_blank" class="text-xs text-sky-400 hover:underline flex items-center gap-1">
+                        <a id="profileLinkPreview" href="https://www.linkedin.com/in/shehan-nadeesha/" target="_blank" class="text-xs text-zinc-400 hover:text-white flex items-center gap-1 transition">
                             <span>linkedin.com/in/shehan-nadeesha</span>
                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
@@ -284,7 +295,7 @@
                             <div class="flex items-center gap-3">
                                 <div class="relative w-12 h-12 rounded-full overflow-hidden bg-zinc-800 border border-zinc-700 flex items-center justify-center shrink-0">
                                     <img id="previewAvatarImg" src="" alt="Shehan Nadeesha" class="hidden w-full h-full object-cover" />
-                                    <span id="previewAvatarFallback" class="text-sm font-bold text-sky-400">SN</span>
+                                    <span id="previewAvatarFallback" class="text-sm font-bold text-zinc-200">SN</span>
                                 </div>
                                 <div class="min-w-0">
                                     <div class="flex items-center gap-1.5">
@@ -307,10 +318,10 @@
                             </button>
                         </div>
 
-                        <!-- Post Caption Preview (No Horizontal Scrollbar, Clean Expand/Collapse) -->
+                        <!-- Post Caption Preview -->
                         <div class="px-4 pb-3">
                             <div id="livePreviewText" class="text-[13.5px] text-zinc-200 whitespace-pre-line leading-relaxed wrap-anywhere"></div>
-                            <button id="toggleExpandBtn" onclick="togglePreviewExpand()" class="hidden mt-1 text-xs font-medium text-zinc-400 hover:text-sky-400 transition">
+                            <button id="toggleExpandBtn" onclick="togglePreviewExpand()" class="hidden mt-1 text-xs font-medium text-zinc-400 hover:text-white transition">
                                 …see more
                             </button>
                         </div>
@@ -356,7 +367,7 @@
         <!-- TAB 2: POST ARCHIVE & FILTERABLE HISTORY VIEW -->
         <div id="historyTabSection" class="hidden">
 
-            <!-- Archive Controls Header: Filter Pills + Search + Bulk Delete Drafts -->
+            <!-- Archive Controls Header -->
             <div class="studio-surface rounded-2xl p-4 sm:p-5 mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div class="flex flex-wrap items-center gap-2">
                     <button id="filterAllBtn" onclick="setHistoryFilter('all')" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-white text-zinc-950 transition flex items-center gap-2">
@@ -365,35 +376,33 @@
                     </button>
 
                     <button id="filterPublishedBtn" onclick="setHistoryFilter('published')" class="px-3.5 py-1.5 rounded-xl text-xs font-medium bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800 transition flex items-center gap-2">
-                        <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
                         <span>Published</span>
                         <span id="filterCountPublished" class="px-1.5 py-0.2 rounded text-[10px] font-mono bg-zinc-800 text-zinc-300">0</span>
                     </button>
 
                     <button id="filterDraftBtn" onclick="setHistoryFilter('draft')" class="px-3.5 py-1.5 rounded-xl text-xs font-medium bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800 transition flex items-center gap-2">
-                        <span class="w-2 h-2 rounded-full bg-sky-400"></span>
+                        <span class="w-1.5 h-1.5 rounded-full bg-sky-400"></span>
                         <span>Drafts Only</span>
                         <span id="filterCountDraft" class="px-1.5 py-0.2 rounded text-[10px] font-mono bg-zinc-800 text-zinc-300">0</span>
                     </button>
                 </div>
 
                 <div class="flex flex-wrap items-center gap-3">
-                    <!-- Search Input -->
                     <div class="relative flex-1 sm:w-64">
                         <input
                             id="historySearchInput"
                             type="text"
                             oninput="renderHistoryCards()"
                             placeholder="Search headline or topic..."
-                            class="w-full pl-9 pr-3 py-1.5 rounded-xl bg-[#09090b] border border-zinc-800 text-xs text-zinc-200 focus:outline-none focus:border-sky-500"
+                            class="w-full pl-9 pr-3 py-1.5 rounded-xl bg-[#09090b] border border-zinc-800 text-xs text-zinc-200 focus:outline-none focus:border-zinc-600"
                         />
                         <svg class="w-3.5 h-3.5 text-zinc-500 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                         </svg>
                     </div>
 
-                    <!-- Bulk Clear Unwanted Drafts -->
-                    <button onclick="clearAllUnwantedDrafts()" class="px-3.5 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-xs font-medium flex items-center gap-1.5 transition">
+                    <button onclick="clearAllUnwantedDrafts()" class="px-3.5 py-1.5 rounded-xl bg-zinc-900 hover:bg-rose-950/40 text-zinc-300 hover:text-rose-400 border border-zinc-800 hover:border-rose-900/50 text-xs font-medium flex items-center gap-1.5 transition">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                         </svg>
@@ -402,48 +411,173 @@
                 </div>
             </div>
 
-            <!-- Empty Archive State -->
             <div id="historyEmptyState" class="hidden py-20 studio-surface rounded-2xl text-center px-4">
                 <p id="historyEmptyText" class="text-sm text-zinc-400">No matching posts found in your archive.</p>
             </div>
 
-            <!-- History Cards Grid -->
             <div id="historyListGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5"></div>
         </div>
 
     </main>
 
-    <!-- LinkedIn Profile Settings Modal -->
-    <div id="profileModal" class="fixed inset-0 z-50 hidden bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="studio-surface rounded-2xl max-w-md w-full p-6 shadow-2xl">
-            <div class="flex items-center justify-between pb-4 border-b border-zinc-800">
+    <!-- Clean Linear-Grade Automation Schedule Modal (Zero Emojis, Native Dark Controls) -->
+    <div id="schedulerModal" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-[#111113] border border-zinc-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl">
+
+            <!-- Modal Header -->
+            <div class="flex items-start justify-between pb-4 border-b border-zinc-800/80">
                 <div>
-                    <h3 class="text-base font-semibold text-white">LinkedIn Profile Branding</h3>
+                    <div class="flex items-center gap-2">
+                        <h3 class="text-sm font-semibold text-white">Daily Automation Schedule</h3>
+                        <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-900 text-zinc-400 border border-zinc-800">
+                            Recurring Daily • UTC+05:30
+                        </span>
+                    </div>
+                    <p class="text-xs text-zinc-400 mt-1">
+                        Runs automatically every day in the background. Set once and leave active.
+                    </p>
+                </div>
+                <button onclick="closeSchedulerModal()" class="text-zinc-500 hover:text-zinc-200 p-1 rounded-lg hover:bg-zinc-900 transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <form onsubmit="saveSchedulerSettings(event)" class="mt-5 space-y-5">
+
+                <!-- Recurring Status & Custom Toggle Switch -->
+                <div class="p-4 rounded-xl bg-[#09090b] border border-zinc-800/90 flex items-center justify-between gap-4">
+                    <div>
+                        <span class="text-[11px] font-medium uppercase tracking-wider text-zinc-500">Next Scheduled Run</span>
+                        <p id="schedNextSlotText" class="text-xs font-mono text-zinc-200 mt-1">Loading schedule...</p>
+                    </div>
+
+                    <label class="inline-flex items-center gap-3 cursor-pointer select-none">
+                        <span class="text-xs font-medium text-zinc-300">Auto-Pilot</span>
+                        <span class="relative inline-flex items-center">
+                            <input id="schedEnabledToggle" type="checkbox" checked class="sr-only peer" />
+                            <div class="w-9 h-5 bg-zinc-800 rounded-full peer peer-checked:bg-white transition-colors"></div>
+                            <div class="absolute left-0.5 top-0.5 w-4 h-4 bg-zinc-400 rounded-full peer-checked:bg-zinc-950 peer-checked:translate-x-4 transition-transform"></div>
+                        </span>
+                    </label>
+                </div>
+
+                <!-- 4 Peak Time Slots (Clean Typography, No Emojis) -->
+                <div>
+                    <div class="flex items-center justify-between mb-2.5">
+                        <label class="text-xs font-medium text-zinc-300">
+                            Daily Generation Windows (Sri Lanka Time)
+                        </label>
+                        <span class="text-[11px] text-zinc-500">4 drafts / day</span>
+                    </div>
+
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                        <div class="p-2.5 rounded-xl bg-[#09090b] border border-zinc-800/90">
+                            <span class="text-[10px] font-mono uppercase tracking-wider text-zinc-500 block mb-1">Slot 01 • Morning</span>
+                            <input id="slotTime1" type="time" value="08:30" required class="w-full bg-transparent text-xs font-mono text-zinc-100 focus:outline-none" />
+                        </div>
+                        <div class="p-2.5 rounded-xl bg-[#09090b] border border-zinc-800/90">
+                            <span class="text-[10px] font-mono uppercase tracking-wider text-zinc-500 block mb-1">Slot 02 • Midday</span>
+                            <input id="slotTime2" type="time" value="12:30" required class="w-full bg-transparent text-xs font-mono text-zinc-100 focus:outline-none" />
+                        </div>
+                        <div class="p-2.5 rounded-xl bg-[#09090b] border border-zinc-800/90">
+                            <span class="text-[10px] font-mono uppercase tracking-wider text-zinc-500 block mb-1">Slot 03 • Evening</span>
+                            <input id="slotTime3" type="time" value="17:30" required class="w-full bg-transparent text-xs font-mono text-zinc-100 focus:outline-none" />
+                        </div>
+                        <div class="p-2.5 rounded-xl bg-[#09090b] border border-zinc-800/90">
+                            <span class="text-[10px] font-mono uppercase tracking-wider text-zinc-500 block mb-1">Slot 04 • Night</span>
+                            <input id="slotTime4" type="time" value="21:00" required class="w-full bg-transparent text-xs font-mono text-zinc-100 focus:outline-none" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System Notifications Row -->
+                <div class="p-4 rounded-xl bg-[#09090b] border border-zinc-800/90 flex items-center justify-between gap-4">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <p class="text-xs font-medium text-zinc-200">Desktop & PWA Push Alerts</p>
+                            <span id="notifBadgeDot" class="w-1.5 h-1.5 rounded-full bg-zinc-500"></span>
+                        </div>
+                        <p id="notifPermissionStatus" class="text-[11px] text-zinc-500 mt-0.5">Notifies when a new draft enters your workbench</p>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <button id="enableAlertsBtn" type="button" onclick="enableBrowserNotifications()" class="px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border border-zinc-800 text-xs font-medium transition">
+                            Allow
+                        </button>
+                        <button type="button" onclick="sendTestNotification()" class="px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 text-xs font-medium transition">
+                            Send Test
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Optional Mobile Push Relay (ntfy.sh) -->
+                <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label class="text-xs font-medium text-zinc-300">
+                            Mobile Push Topic <span class="text-zinc-500 font-normal">(Optional • ntfy.sh)</span>
+                        </label>
+                        <a href="https://ntfy.sh" target="_blank" class="text-[11px] text-zinc-400 hover:text-white underline">Docs</a>
+                    </div>
+                    <input
+                        id="inputNtfyTopic"
+                        type="text"
+                        placeholder="shehan-linkedin-agent"
+                        class="w-full px-3 py-2 rounded-xl bg-[#09090b] border border-zinc-800 text-xs text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-zinc-600 font-mono"
+                    />
+                    <p class="text-[11px] text-zinc-500 mt-1.5 leading-relaxed">
+                        Subscribe to this topic in the free iOS/Android ntfy app to receive background phone alerts when Safari is closed.
+                    </p>
+                </div>
+
+                <!-- Footer Actions -->
+                <div class="flex items-center justify-end gap-2.5 pt-4 border-t border-zinc-800/80">
+                    <button type="button" onclick="closeSchedulerModal()" class="px-4 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 text-xs font-medium transition">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-4 py-2 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 text-xs font-semibold transition">
+                        Save Configuration
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- LinkedIn Profile Settings Modal -->
+    <div id="profileModal" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-[#111113] border border-zinc-800 rounded-2xl max-w-md w-full p-6 shadow-2xl">
+            <div class="flex items-center justify-between pb-4 border-b border-zinc-800/80">
+                <div>
+                    <h3 class="text-sm font-semibold text-white">LinkedIn Profile Branding</h3>
                     <p class="text-xs text-zinc-400 mt-0.5">Used on both the Feed Preview & generated Liquid Glass cards</p>
                 </div>
-                <button onclick="closeProfileModal()" class="text-zinc-400 hover:text-white">✕</button>
+                <button onclick="closeProfileModal()" class="text-zinc-500 hover:text-zinc-200 p-1 rounded-lg hover:bg-zinc-900 transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
             </div>
 
             <form onsubmit="saveProfile(event)" class="mt-4 space-y-4">
                 <div>
                     <label class="block text-xs font-medium text-zinc-300 mb-1">Full Name</label>
-                    <input id="inputProfileName" type="text" required class="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-white focus:outline-none focus:border-sky-500" />
+                    <input id="inputProfileName" type="text" required class="w-full px-3 py-2 rounded-xl bg-[#09090b] border border-zinc-800 text-xs text-white focus:outline-none focus:border-zinc-600" />
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-zinc-300 mb-1">Role / Headline</label>
-                    <input id="inputProfileHeadline" type="text" required class="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-white focus:outline-none focus:border-sky-500" />
+                    <input id="inputProfileHeadline" type="text" required class="w-full px-3 py-2 rounded-xl bg-[#09090b] border border-zinc-800 text-xs text-white focus:outline-none focus:border-zinc-600" />
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-zinc-300 mb-1">LinkedIn Profile URL</label>
-                    <input id="inputProfileUrl" type="url" required class="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-white focus:outline-none focus:border-sky-500" />
+                    <input id="inputProfileUrl" type="url" required class="w-full px-3 py-2 rounded-xl bg-[#09090b] border border-zinc-800 text-xs text-white focus:outline-none focus:border-zinc-600" />
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-zinc-300 mb-1">Profile Photo (Embedded on Card & Preview)</label>
                     <input id="inputProfileAvatar" type="file" accept="image/*" class="w-full text-xs text-zinc-400 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-zinc-800 file:text-zinc-200 hover:file:bg-zinc-700" />
                 </div>
-                <div class="flex items-center justify-end gap-2 pt-3 border-t border-zinc-800">
-                    <button type="button" onclick="closeProfileModal()" class="px-4 py-2 rounded-xl bg-zinc-900 text-zinc-300 text-xs font-medium">Cancel</button>
-                    <button type="submit" class="px-4 py-2 rounded-xl bg-[#0A66C2] hover:bg-[#004182] text-white text-xs font-semibold">Save Profile</button>
+                <div class="flex items-center justify-end gap-2 pt-4 border-t border-zinc-800/80">
+                    <button type="button" onclick="closeProfileModal()" class="px-4 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 text-xs font-medium transition">Cancel</button>
+                    <button type="submit" class="px-4 py-2 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 text-xs font-semibold transition">Save Profile</button>
                 </div>
             </form>
         </div>
@@ -456,14 +590,188 @@
         let currentDraftId = null;
         let currentImagePath = "";
         let cachedHistory = [];
-        let activeHistoryFilter = "all"; // 'all' | 'published' | 'draft'
+        let activeHistoryFilter = "all";
         let isPreviewExpanded = false;
+        let lastSeenNotifId = Number(localStorage.getItem("lastSeenNotifId") || 0);
+
+        if ("serviceWorker" in navigator) {
+            navigator.serviceWorker.register("/static/sw.js").catch((err) => {
+                console.warn("SW registration skipped:", err);
+            });
+        }
 
         function showToast(msg) {
             const toast = document.getElementById("toast");
             toast.textContent = msg;
             toast.classList.remove("hidden");
-            setTimeout(() => toast.classList.add("hidden"), 4000);
+            setTimeout(() => toast.classList.add("hidden"), 4500);
+        }
+
+        async function fireNativeNotification(title, body, imageUrl) {
+            showToast(`${title} — ${body}`);
+            if (!("Notification" in window) || Notification.permission !== "granted") {
+                return;
+            }
+            try {
+                if ("serviceWorker" in navigator) {
+                    const reg = await navigator.serviceWorker.ready;
+                    await reg.showNotification(title, {
+                        body: body,
+                        icon: "/static/avatar.jpg",
+                        image: imageUrl || undefined,
+                        badge: "/static/avatar.jpg"
+                    });
+                    return;
+                }
+            } catch (e) {
+                console.warn("SW notification fallback:", e);
+            }
+            new Notification(title, { body: body, icon: "/static/avatar.jpg" });
+        }
+
+        async function enableBrowserNotifications() {
+            if (!("Notification" in window)) {
+                showToast("This browser does not support desktop notifications.");
+                return;
+            }
+            const perm = await Notification.requestPermission();
+            updateNotifPermissionLabel();
+            if (perm === "granted") {
+                await fireNativeNotification(
+                    "LinkedIn Studio Alerts Enabled",
+                    "You will be notified 4x daily when new AI/ML drafts are ready."
+                );
+            } else {
+                showToast("Notification permission was denied in browser settings.");
+            }
+        }
+
+        function updateNotifPermissionLabel() {
+            const label = document.getElementById("notifPermissionStatus");
+            const dot = document.getElementById("notifBadgeDot");
+            const allowBtn = document.getElementById("enableAlertsBtn");
+
+            if (!("Notification" in window)) {
+                label.textContent = "Unsupported in this browser";
+                return;
+            }
+            if (Notification.permission === "granted") {
+                label.textContent = "Permission granted • Ready to receive alerts";
+                dot.className = "w-1.5 h-1.5 rounded-full bg-emerald-400";
+                allowBtn.classList.add("hidden");
+            } else if (Notification.permission === "denied") {
+                label.textContent = "Blocked in browser site permissions";
+                dot.className = "w-1.5 h-1.5 rounded-full bg-rose-400";
+                allowBtn.classList.remove("hidden");
+            } else {
+                label.textContent = "Click Allow to enable desktop & PWA notifications";
+                dot.className = "w-1.5 h-1.5 rounded-full bg-zinc-500";
+                allowBtn.classList.remove("hidden");
+            }
+        }
+
+        async function sendTestNotification() {
+            if ("Notification" in window && Notification.permission === "default") {
+                await Notification.requestPermission();
+                updateNotifPermissionLabel();
+            }
+            try {
+                const res = await fetch("/api/scheduler/test-notification", { method: "POST" });
+                const data = await res.json();
+                if (data.notification) {
+                    lastSeenNotifId = data.notification.notif_id;
+                    localStorage.setItem("lastSeenNotifId", String(lastSeenNotifId));
+                    await fireNativeNotification(
+                        "LinkedIn Studio — Test Notification",
+                        "Daily 4x/day recurring automation is active.",
+                        data.notification.image_url
+                    );
+                }
+            } catch (e) {
+                showToast("Failed to trigger test notification");
+            }
+        }
+
+        function openSchedulerModal() {
+            updateNotifPermissionLabel();
+            loadSchedulerStatus();
+            document.getElementById("schedulerModal").classList.remove("hidden");
+        }
+
+        function closeSchedulerModal() {
+            document.getElementById("schedulerModal").classList.add("hidden");
+        }
+
+        async function loadSchedulerStatus() {
+            try {
+                const res = await fetch("/api/scheduler");
+                const data = await res.json();
+                if (data.stats) updateStatsUI(data.stats);
+                if (!data.scheduler) return;
+
+                const sched = data.scheduler;
+                document.getElementById("schedEnabledToggle").checked = sched.enabled;
+                document.getElementById("schedNextSlotText").textContent = sched.enabled
+                    ? `${sched.next_slot}  •  Current: ${sched.current_slt}`
+                    : "Schedule paused";
+                document.getElementById("inputNtfyTopic").value = sched.ntfy_topic || "";
+
+                const times = sched.peak_times || ["08:30", "12:30", "17:30", "21:00"];
+                if (times[0]) document.getElementById("slotTime1").value = times[0];
+                if (times[1]) document.getElementById("slotTime2").value = times[1];
+                if (times[2]) document.getElementById("slotTime3").value = times[2];
+                if (times[3]) document.getElementById("slotTime4").value = times[3];
+
+                const dot = document.getElementById("autoPilotDot");
+                const label = document.getElementById("autoPilotLabel");
+                if (sched.enabled) {
+                    dot.className = "w-2 h-2 rounded-full bg-emerald-400";
+                    label.textContent = `Schedule (${times.length}x/d)`;
+                } else {
+                    dot.className = "w-2 h-2 rounded-full bg-zinc-600";
+                    label.textContent = "Schedule (Paused)";
+                }
+
+                const latestNotif = sched.latest_notification;
+                if (latestNotif && latestNotif.notif_id > lastSeenNotifId) {
+                    lastSeenNotifId = latestNotif.notif_id;
+                    localStorage.setItem("lastSeenNotifId", String(lastSeenNotifId));
+                    await fireNativeNotification(latestNotif.title, latestNotif.body, latestNotif.image_url);
+                    await loadLatestDraft();
+                }
+            } catch (e) {
+                console.error("Scheduler poll error:", e);
+            }
+        }
+
+        async function saveSchedulerSettings(event) {
+            event.preventDefault();
+            const payload = {
+                enabled: document.getElementById("schedEnabledToggle").checked,
+                peak_times: [
+                    document.getElementById("slotTime1").value,
+                    document.getElementById("slotTime2").value,
+                    document.getElementById("slotTime3").value,
+                    document.getElementById("slotTime4").value
+                ],
+                ntfy_topic: document.getElementById("inputNtfyTopic").value.trim()
+            };
+
+            try {
+                const res = await fetch("/api/scheduler", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (data.status === "success") {
+                    await loadSchedulerStatus();
+                    closeSchedulerModal();
+                    showToast("Daily recurring schedule updated");
+                }
+            } catch (e) {
+                showToast("Failed to save schedule");
+            }
         }
 
         function updateStatsUI(stats) {
@@ -528,7 +836,7 @@
         async function copyPostText() {
             const text = document.getElementById("postEditor").value;
             await navigator.clipboard.writeText(text);
-            document.getElementById("copyBtnLabel").textContent = "Copied!";
+            document.getElementById("copyBtnLabel").textContent = "Copied";
             setTimeout(() => document.getElementById("copyBtnLabel").textContent = "Copy Text", 2000);
         }
 
@@ -589,7 +897,7 @@
                 if (data.status === "success") {
                     applyProfileToUI(data.profile);
                     closeProfileModal();
-                    showToast("Profile saved! Next generated card will embed your updated photo.");
+                    showToast("Profile updated");
                 }
             } catch (err) {
                 showToast("Failed to update profile");
@@ -711,7 +1019,7 @@
                 const isPub = item.status === "published";
                 const badgeClass = isPub
                     ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
-                    : "bg-sky-500/10 text-sky-400 border-sky-500/20";
+                    : "bg-zinc-900/90 text-zinc-300 border-zinc-700";
                 const badgeLabel = isPub ? "Published" : "Draft";
 
                 const card = document.createElement("div");
@@ -739,7 +1047,7 @@
                     <div class="px-4 py-3 border-t border-zinc-800/80 bg-[#0d0d10] flex items-center justify-between gap-2">
                         <span class="text-[11px] font-mono text-zinc-500">${item.created_at}</span>
                         <div class="flex items-center gap-2">
-                            <button onclick="deletePostById(${item.id})" title="Delete this post" class="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 transition">
+                            <button onclick="deletePostById(${item.id})" title="Delete this post" class="p-1.5 rounded-lg bg-zinc-900 hover:bg-rose-950/50 text-zinc-400 hover:text-rose-400 border border-zinc-800 transition">
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                                 </svg>
@@ -759,7 +1067,7 @@
             if (!item) return;
             renderDraft(item);
             switchTab("studio");
-            showToast("Loaded selected post into Studio Workbench");
+            showToast("Loaded selected post into Studio");
         }
 
         async function deletePostById(postId) {
@@ -774,7 +1082,7 @@
                     if (currentDraftId === postId) {
                         renderDraft(data.next_draft);
                     }
-                    showToast("Draft deleted! (News topic stays locked so it won't repeat)");
+                    showToast("Draft deleted (Topic remains locked in seen_topics)");
                 }
             } catch (e) {
                 showToast("Failed to delete post");
@@ -794,7 +1102,7 @@
                     if (data.stats) updateStatsUI(data.stats);
                     await loadHistory();
                     renderDraft(data.next_draft);
-                    showToast(`Cleared ${data.deleted_count} unpublished draft(s)!`);
+                    showToast(`Cleared ${data.deleted_count} unpublished draft(s)`);
                 }
             } catch (e) {
                 showToast("Failed to clear drafts");
@@ -822,7 +1130,7 @@
                 if (data.status === "success") {
                     renderDraft(data.draft);
                     if (data.stats) updateStatsUI(data.stats);
-                    showToast("Fresh unseen AI/ML news generated!");
+                    showToast("New AI/ML draft ready in Studio");
                 } else {
                     showToast("Generation error: " + (data.detail || "Unknown error"));
                 }
@@ -876,6 +1184,8 @@
         window.addEventListener("DOMContentLoaded", () => {
             loadProfile();
             loadLatestDraft();
+            loadSchedulerStatus();
+            setInterval(loadSchedulerStatus, 20000);
         });
     </script>
 </body>

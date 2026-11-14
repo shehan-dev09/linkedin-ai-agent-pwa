@@ -1,7 +1,10 @@
 import json
+import asyncio
 from io import BytesIO
 from pathlib import Path
 from datetime import datetime
+from contextlib import asynccontextmanager
+from typing import List
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Query
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -19,11 +22,30 @@ from app.storage import (
     get_latest_post_record,
     get_agent_stats
 )
+from app.scheduler import (
+    load_scheduler_config,
+    save_scheduler_config,
+    get_next_scheduled_slot,
+    get_slt_now,
+    scheduler_background_loop,
+    send_optional_ntfy_push
+)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Start SQLite database and the 4x/day Autonomous Peak-Time Scheduler on boot."""
+    init_db()
+    scheduler_task = asyncio.create_task(scheduler_background_loop())
+    yield
+    scheduler_task.cancel()
+
 
 app = FastAPI(
     title="LinkedIn Autonomous AI Agent",
     description="Human-in-the-Loop PWA for automated LinkedIn content creation",
-    version="1.3.0"
+    version="1.4.0",
+    lifespan=lifespan
 )
 
 # Mount static directory for images and assets
@@ -40,14 +62,17 @@ DEFAULT_PROFILE = {
     "avatar_url": ""
 }
 
-# Initialize SQLite tables on server startup
-init_db()
-
 
 class PublishRequest(BaseModel):
     post_text: str
     image_path: str
     post_id: int | None = None
+
+
+class SchedulerUpdateRequest(BaseModel):
+    enabled: bool
+    peak_times: List[str]
+    ntfy_topic: str = ""
 
 
 def get_profile_data() -> dict:
@@ -116,6 +141,67 @@ async def update_profile(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/api/scheduler")
+async def get_scheduler_status():
+    """Return current 4x/day Peak-Time Scheduler settings, next slot, and notifications."""
+    config = load_scheduler_config()
+    return {
+        "status": "success",
+        "scheduler": {
+            **config,
+            "current_slt": get_slt_now().strftime("%H:%M SLT"),
+            "next_slot": get_next_scheduled_slot(config.get("peak_times", []))
+        },
+        "stats": get_agent_stats()
+    }
+
+
+@app.post("/api/scheduler")
+async def update_scheduler_settings(req: SchedulerUpdateRequest):
+    """Save updated peak time slots and auto-pilot status."""
+    config = load_scheduler_config()
+    clean_times = sorted(list({t.strip() for t in req.peak_times if t.strip()}))
+    config["enabled"] = req.enabled
+    config["peak_times"] = clean_times
+    config["ntfy_topic"] = req.ntfy_topic.strip()
+    save_scheduler_config(config)
+
+    return {
+        "status": "success",
+        "scheduler": {
+            **config,
+            "current_slt": get_slt_now().strftime("%H:%M SLT"),
+            "next_slot": get_next_scheduled_slot(clean_times)
+        }
+    }
+
+
+@app.post("/api/scheduler/test-notification")
+async def trigger_test_notification():
+    """Send a test notification to verify PWA and optional ntfy.sh alerts."""
+    config = load_scheduler_config()
+    now_slt = get_slt_now()
+    test_notif = {
+        "notif_id": int(now_slt.timestamp()),
+        "post_id": 0,
+        "title": "⚡ LinkedIn AI Studio: Notification Active!",
+        "body": "Your 4x/day Peak-Hour Auto-Pilot is connected and ready to alert you.",
+        "image_url": "/static/avatar.jpg",
+        "created_at": now_slt.strftime("%Y-%m-%d %H:%M:%S SLT")
+    }
+    config["latest_notification"] = test_notif
+    save_scheduler_config(config)
+
+    if config.get("ntfy_topic"):
+        send_optional_ntfy_push(
+            title="Test Alert: 4x/Day Peak Auto-Pilot is Active!",
+            source="LinkedIn AI Studio",
+            ntfy_topic=config["ntfy_topic"]
+        )
+
+    return {"status": "success", "notification": test_notif}
+
+
 @app.get("/api/draft")
 async def get_latest_draft():
     """Retrieve the currently active draft along with live agent stats."""
@@ -128,7 +214,7 @@ async def get_latest_draft():
 
 @app.get("/api/history")
 async def get_history(status: str | None = Query(None)):
-    """Return past generated/published posts with optional status filter ('published' or 'draft')."""
+    """Return past generated/published posts with optional status filter."""
     return {
         "status": "success",
         "stats": get_agent_stats(),
@@ -167,9 +253,9 @@ async def delete_single_post(post_id: int):
 @app.post("/api/generate")
 @app.post("/api/regenerate")
 async def generate_new_draft():
-    """Trigger the AI Agent to fetch a fresh unseen news item and log it to SQLite."""
+    """Trigger the AI Agent in a non-blocking thread to fetch a fresh unseen news item."""
     try:
-        result = run_agent_workflow()
+        result = await asyncio.to_thread(run_agent_workflow)
         normalized_path = result["image_path"].replace("\\", "/")
         image_url = f"/{normalized_path}?t={int(datetime.now().timestamp())}"
 

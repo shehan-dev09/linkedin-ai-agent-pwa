@@ -14,3 +14,6 @@ static/profile.json
 
 #DB Avoid
 static/agent_history.db
+
+#Scheduler Config
+static/scheduler_config.json
