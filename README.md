@@ -107,8 +107,6 @@ Linkedin-ai-agent-pwa/
 │   ├── manifest.json         # iOS / Android Progressive Web App manifest
 │   └── sw.js                 # Service Worker for standalone PWA installation
 ├── app.py                    # Cloud ASGI launcher with SHA-256 HMAC Passcode Lock Middleware
-├── CASE_STUDY.md             # Deep-dive engineering case study, benchmarks & troubleshooting log
-├── render.yaml               # Cloud deployment blueprint
 ├── requirements.txt          # Python dependencies
 └── README.md                 # Project documentation
 ```
