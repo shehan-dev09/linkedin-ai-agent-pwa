@@ -343,6 +343,72 @@ def _create_supersampled_circle_mask(diameter: int) -> Image.Image:
     return big_mask.resize((diameter, diameter), resample=Image.Resampling.LANCZOS)
 
 
+# Keep track of recently used backgrounds so Redo/Regenerate always picks a fresh image
+_RECENT_BG_URLS = []
+
+
+def _get_dynamic_background_urls(headline: str) -> list:
+    """
+    Automatically extracts keywords from the news headline and searches Unsplash dynamically
+    for relevant high-res tech/AI imagery, falling back to UNSPLASH_TECH_BACKGROUNDS.
+    """
+    global _RECENT_BG_URLS
+
+    stop_words = {
+        "the", "and", "for", "with", "from", "that", "this", "into", "over", "after",
+        "new", "how", "why", "what", "when", "who", "will", "can", "its", "are", "was",
+        "has", "have", "had", "not", "but", "out", "you", "all", "any", "more", "about",
+        "says", "report", "launch", "launches", "released", "releases", "announces", "first"
+    }
+    words = re.findall(r"[A-Za-z]+", (headline or "").lower())
+    keywords = [w for w in words if len(w) > 3 and w not in stop_words][:3]
+
+    h_lower = (headline or "").lower()
+    if any(k in h_lower for k in ["robot", "humanoid", "tesla", "figure", "drone", "autonomous"]):
+        search_query = "robotics futuristic artificial intelligence dark"
+    elif any(k in h_lower for k in ["chip", "nvidia", "gpu", "hardware", "silicon", "processor", "quantum"]):
+        search_query = "microchip processor glowing circuit technology"
+    elif any(k in h_lower for k in ["cyber", "security", "hack", "privacy", "safety", "deepfake"]):
+        search_query = "cybersecurity matrix digital lock dark"
+    elif any(k in h_lower for k in ["code", "coding", "developer", "software", "github", "programming"]):
+        search_query = "software programming code dark screen"
+    elif any(k in h_lower for k in ["cloud", "server", "data", "datacenter", "energy", "power"]):
+        search_query = "server room data center futuristic lights"
+    elif any(k in h_lower for k in ["medical", "health", "bio", "drug", "brain", "neural"]):
+        search_query = "neural network biotechnology glowing abstract"
+    elif keywords:
+        search_query = f"{' '.join(keywords[:2])} artificial intelligence abstract dark"
+    else:
+        search_query = "artificial intelligence neural network dark abstract"
+
+    dynamic_urls = []
+    try:
+        resp = requests.get(
+            "https://unsplash.com/napi/search/photos",
+            params={"query": search_query, "per_page": 18, "orientation": "squarish"},
+            headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"},
+            timeout=6,
+        )
+        if resp.status_code == 200:
+            for item in resp.json().get("results", []):
+                raw_url = item.get("urls", {}).get("regular") or item.get("urls", {}).get("small")
+                if raw_url:
+                    clean_url = f"{raw_url.split('?')[0]}?auto=format&fit=crop&w=1200&q=85"
+                    dynamic_urls.append(clean_url)
+    except Exception as e:
+        print(f"Dynamic Unsplash search fallback: {e}")
+
+    pool = dynamic_urls if dynamic_urls else list(UNSPLASH_TECH_BACKGROUNDS)
+    fresh_pool = [u for u in pool if u not in _RECENT_BG_URLS]
+    if not fresh_pool:
+        _RECENT_BG_URLS.clear()
+        fresh_pool = pool
+
+    selected = random.sample(fresh_pool, min(3, len(fresh_pool)))
+    print(f"Dynamic Background Search Query: '{search_query}' -> {len(dynamic_urls)} matches found.")
+    return selected + random.sample(UNSPLASH_TECH_BACKGROUNDS, len(UNSPLASH_TECH_BACKGROUNDS))
+
+
 def generate_creative_image(headline: str, source: str = "AI NEWS") -> str:
     """
     Render a 100% watermark-free 1080x1080 Apple iOS Liquid Glass card.
@@ -357,13 +423,16 @@ def generate_creative_image(headline: str, source: str = "AI NEWS") -> str:
     canvas_size = 1080
     bg_img = None
 
-    shuffled_urls = random.sample(UNSPLASH_TECH_BACKGROUNDS, len(UNSPLASH_TECH_BACKGROUNDS))
-    for url in shuffled_urls[:2]:
+    candidate_urls = _get_dynamic_background_urls(headline)
+    for url in candidate_urls[:4]:
         try:
-            resp = requests.get(url, timeout=6)
+            resp = requests.get(url, timeout=8)
             if resp.status_code == 200:
                 img = Image.open(BytesIO(resp.content)).convert("RGB")
                 bg_img = ImageOps.fit(img, (canvas_size, canvas_size), method=Image.Resampling.LANCZOS)
+                _RECENT_BG_URLS.append(url)
+                if len(_RECENT_BG_URLS) > 15:
+                    _RECENT_BG_URLS.pop(0)
                 break
         except Exception:
             continue

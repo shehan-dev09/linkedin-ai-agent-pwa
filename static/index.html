@@ -13,7 +13,7 @@
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <style>
+        <style>
         :root {
             color-scheme: dark;
         }
@@ -22,6 +22,7 @@
             background-color: #09090b;
             color: #fafafa;
             -webkit-tap-highlight-color: transparent;
+            overflow-x: hidden;
         }
         .mono {
             font-family: 'JetBrains Mono', monospace;
@@ -86,6 +87,46 @@
             overflow-wrap: anywhere;
             word-break: break-word;
             line-height: 1.42857;
+        }
+
+        /* =========================================================
+           MOBILE-FRIENDLY & iOS PWA RESPONSIVE OVERRIDES
+           ========================================================= */
+        @media (max-width: 640px) {
+            body {
+                padding-bottom: env(safe-area-inset-bottom, 20px);
+            }
+            /* Prevent iOS Safari from auto-zooming when tapping inputs/textarea */
+            textarea, input, select {
+                font-size: 16px !important;
+            }
+            /* Make top sticky header wrap cleanly on narrow phone screens */
+            header > div {
+                height: auto !important;
+                min-height: 3.5rem;
+                padding-top: 0.65rem !important;
+                padding-bottom: 0.65rem !important;
+                flex-wrap: wrap !important;
+                gap: 0.5rem !important;
+            }
+            /* Allow header right-side action buttons to scroll/wrap cleanly */
+            header > div > div:last-child {
+                width: 100%;
+                justify-content: space-between;
+                overflow-x: auto;
+                padding-bottom: 2px;
+            }
+            /* Make LinkedIn Feed Preview card fit edge-to-edge on mobile */
+            .linkedin-card {
+                width: 100% !important;
+                max-width: 100% !important;
+                border-radius: 6px;
+            }
+            /* Adjust Post Caption editor height on mobile so you don't scroll forever */
+            #post-caption {
+                min-height: 220px !important;
+                height: 240px !important;
+            }
         }
     </style>
 </head>
