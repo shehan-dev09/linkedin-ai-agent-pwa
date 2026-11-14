@@ -319,7 +319,7 @@ def generate_creative_image(
             anchor="mm",
         )
 
-        # Author Name & Role Title
+        # Author Name & Role Titles
         draw.text(
             (702, 806),
             "Shehan Nadeesha",
