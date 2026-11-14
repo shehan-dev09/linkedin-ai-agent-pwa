@@ -1,25 +1,60 @@
+"""LinkedIn Official API Publishing Service with Auto-URN Discovery."""
+
 import os
+from typing import Dict
 from dotenv import load_dotenv
 import requests
 
 load_dotenv()
 
 
-def publish_to_linkedin(post_text: str, image_path: str) -> dict:
-    """Publishes the approved post and image to LinkedIn using the Official LinkedIn API.
+def _resolve_person_urn(access_token: str) -> str:
+    """Automatically fetches the authenticated member's LinkedIn Person URN
 
-    Requires LINKEDIN_ACCESS_TOKEN and LINKEDIN_PERSON_URN in the .env file.
+    using OpenID Connect (/v2/userinfo) or (/v2/me) so manual URN lookup is not
+    required.
     """
-    access_token = os.getenv("LINKEDIN_ACCESS_TOKEN")
-    person_urn = os.getenv(
-        "LINKEDIN_PERSON_URN"
-    )  # Format: urn:li:person:XXXXXX
+    env_urn = os.getenv("LINKEDIN_PERSON_URN")
+    if env_urn and env_urn.startswith("urn:li:person:"):
+        return env_urn
 
-    # If LinkedIn credentials are not configured yet, return a helpful status
-    if not access_token or not person_urn:
+    headers = {"Authorization": f"Bearer {access_token}"}
+
+    # 1. Try OpenID Connect userinfo endpoint (Standard for new LinkedIn Apps)
+    res = requests.get(
+        "https://api.linkedin.com/v2/userinfo", headers=headers, timeout=10
+    )
+    if res.status_code == 200:
+        sub = res.json().get("sub")
+        if sub:
+            return f"urn:li:person:{sub}"
+
+    # 2. Fallback to legacy /v2/me endpoint
+    res_me = requests.get(
+        "https://api.linkedin.com/v2/me", headers=headers, timeout=10
+    )
+    if res_me.status_code == 200:
+        member_id = res_me.json().get("id")
+        if member_id:
+            return f"urn:li:person:{member_id}"
+
+    raise RuntimeError(
+        "Could not resolve LinkedIn Person URN. Check your LINKEDIN_ACCESS_TOKEN permissions."
+    )
+
+
+def publish_to_linkedin(post_text: str, image_path: str) -> Dict[str, str]:
+    """Publishes the approved post and generated 1080x1080 visual to LinkedIn.
+
+    Runs in safe simulation mode if LINKEDIN_ACCESS_TOKEN is not set in .env.
+    """
+    load_dotenv(override=True)
+    access_token = os.getenv("LINKEDIN_ACCESS_TOKEN")
+
+    if not access_token:
         return {
             "status": "simulated",
-            "message": "Post approved! (Add LINKEDIN_ACCESS_TOKEN in .env to enable live auto-publishing).",
+            "message": "Approved! (Simulation Mode: Add LINKEDIN_ACCESS_TOKEN to .env for live LinkedIn publishing).",
         }
 
     headers = {
@@ -28,9 +63,12 @@ def publish_to_linkedin(post_text: str, image_path: str) -> dict:
     }
 
     try:
-        # Step 1: Register the image upload with LinkedIn
-        register_url = "https://api.linkedin.com/v2/assets?action=registerUpload"
-        register_payload = {
+        # Step 1: Automatically resolve Shehan's LinkedIn Person URN
+        person_urn = _resolve_person_urn(access_token)
+
+        # Step 2: Register image upload with LinkedIn Assets API
+        reg_url = "https://api.linkedin.com/v2/assets?action=registerUpload"
+        reg_payload = {
             "registerUploadRequest": {
                 "recipes": ["urn:li:digitalmediaRecipe:feedshare-image"],
                 "owner": person_urn,
@@ -43,7 +81,7 @@ def publish_to_linkedin(post_text: str, image_path: str) -> dict:
             }
         }
         reg_res = requests.post(
-            register_url, headers=headers, json=register_payload, timeout=15
+            reg_url, headers=headers, json=reg_payload, timeout=15
         )
         reg_res.raise_for_status()
         reg_data = reg_res.json()
@@ -53,15 +91,17 @@ def publish_to_linkedin(post_text: str, image_path: str) -> dict:
         ]["uploadUrl"]
         asset_urn = reg_data["value"]["asset"]
 
-        # Step 2: Upload the binary image file
+        # Step 3: Upload binary image file
         with open(image_path, "rb") as img_file:
-            upload_headers = {"Authorization": f"Bearer {access_token}"}
             up_res = requests.put(
-                upload_url, headers=upload_headers, data=img_file, timeout=30
+                upload_url,
+                headers={"Authorization": f"Bearer {access_token}"},
+                data=img_file,
+                timeout=30,
             )
             up_res.raise_for_status()
 
-        # Step 3: Create the LinkedIn UGC Post with the uploaded image
+        # Step 4: Publish UGC Post with image asset
         post_url = "https://api.linkedin.com/v2/ugcPosts"
         post_payload = {
             "author": person_urn,
@@ -73,9 +113,13 @@ def publish_to_linkedin(post_text: str, image_path: str) -> dict:
                     "media": [
                         {
                             "status": "READY",
-                            "description": {"text": "AI & ML Engineering Insight"},
+                            "description": {
+                                "text": "AI & ML Engineering Insight"
+                            },
                             "media": asset_urn,
-                            "title": {"text": "Shehan Nadeesha | AI/ML Engineer"},
+                            "title": {
+                                "text": "Shehan Nadeesha | AI/ML Engineer"
+                            },
                         }
                     ],
                 }
@@ -84,7 +128,6 @@ def publish_to_linkedin(post_text: str, image_path: str) -> dict:
                 "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC"
             },
         }
-
         post_res = requests.post(
             post_url, headers=headers, json=post_payload, timeout=15
         )
@@ -96,4 +139,4 @@ def publish_to_linkedin(post_text: str, image_path: str) -> dict:
         }
 
     except Exception as e:
-        return {"status": "error", "message": f"LinkedIn API Error: {str(e)}"}
+        raise RuntimeError(f"LinkedIn API Error: {str(e)}")
