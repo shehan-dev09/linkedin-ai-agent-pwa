@@ -85,7 +85,6 @@ def fetch_latest_tech_news():
     feed = feedparser.parse(rss_url)
 
     if feed.entries:
-        # Pick randomly from the top 5 latest AI/ML articles for variety
         top_entries = feed.entries[:5]
         selected_entry = random.choice(top_entries)
         source = (
@@ -129,23 +128,23 @@ def generate_creative_image(
     news_source: str = "AI News",
     output_path: str = "static/generated_images/latest_post.jpg",
 ) -> str:
-    """Generates an Apple iOS / visionOS 'Liquid Glass' (Glassmorphism) LinkedIn visual (1080x1080)
+    """Generates an Apple iOS 'Liquid Glass' LinkedIn visual (1080x1080).
 
-    branded specifically for Shehan Nadeesha | AI/ML Engineer.
+    Automatically embeds Shehan Nadeesha's real profile photo if
+    static/avatar.jpg exists.
     """
     print("[INFO] Designing Apple iOS 'Liquid Glass' visual card...")
 
     unsplash_ai_photos = [
-        "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=1080&q=85",  # AI Neural Network concept
-        "https://images.unsplash.com/photo-1518770660439-4636190af475?w=1080&q=85",  # GPU / AI Hardware Chip
-        "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=1080&q=85",  # ML Code on screen
-        "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=1080&q=85",  # Data Matrix
-        "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=1080&q=85",  # Cyber / Neural nodes
-        "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1080&q=85",  # Global Data Network
+        "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=1080&q=85",
+        "https://images.unsplash.com/photo-1518770660439-4636190af475?w=1080&q=85",
+        "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=1080&q=85",
+        "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=1080&q=85",
+        "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=1080&q=85",
+        "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1080&q=85",
     ]
 
     try:
-        # 1. Load & prepare rich background image
         bg_url = random.choice(unsplash_ai_photos)
         res = requests.get(bg_url, timeout=10)
         bg_img = Image.open(io.BytesIO(res.content)).convert("RGBA")
@@ -163,25 +162,18 @@ def generate_creative_image(
         bg_img = bg_img.resize((1080, 1080), Image.Resampling.LANCZOS)
         bg_img = ImageEnhance.Brightness(bg_img).enhance(0.45)
 
-        # 2. Add Apple-style ambient glowing orbs on background for rich liquid glass refraction
         ambient_orbs = Image.new("RGBA", (1080, 1080), (0, 0, 0, 0))
         orb_draw = ImageDraw.Draw(ambient_orbs)
-        orb_draw.ellipse(
-            [(60, 100), (520, 560)], fill=(14, 165, 233, 135)
-        )  # Cyan glow top-left
-        orb_draw.ellipse(
-            [(560, 520), (1020, 980)], fill=(139, 92, 246, 135)
-        )  # Indigo/Purple glow bottom-right
+        orb_draw.ellipse([(60, 100), (520, 560)], fill=(14, 165, 233, 135))
+        orb_draw.ellipse([(560, 520), (1020, 980)], fill=(139, 92, 246, 135))
         ambient_orbs = ambient_orbs.filter(
             ImageFilter.GaussianBlur(radius=95)
         )
         base_canvas = Image.alpha_composite(bg_img, ambient_orbs)
 
-        # Glass Card Coordinates (Centered Floating iOS Squircle)
         card_box = (75, 165, 1005, 915)
         card_radius = 52
 
-        # 3. Create 3D Drop Shadow under the floating glass panel
         shadow_layer = Image.new("RGBA", (1080, 1080), (0, 0, 0, 0))
         shadow_draw = ImageDraw.Draw(shadow_layer)
         shadow_draw.rounded_rectangle(
@@ -190,10 +182,8 @@ def generate_creative_image(
         shadow_layer = shadow_layer.filter(ImageFilter.GaussianBlur(radius=30))
         base_canvas = Image.alpha_composite(base_canvas, shadow_layer)
 
-        # 4. Create the Frosted Liquid Glass Layer (Heavy Gaussian Blur of underlying pixels)
         blurred_bg = base_canvas.filter(ImageFilter.GaussianBlur(radius=32))
 
-        # Add Liquid Glass surface sheen
         glass_sheen = Image.new("RGBA", (1080, 1080), (0, 0, 0, 0))
         sheen_draw = ImageDraw.Draw(glass_sheen)
         for y in range(card_box[1], card_box[3]):
@@ -206,14 +196,12 @@ def generate_creative_image(
 
         frosted_glass = Image.alpha_composite(blurred_bg, glass_sheen)
 
-        # Mask the frosted glass to the exact rounded squircle shape
         glass_mask = Image.new("L", (1080, 1080), 0)
         mask_draw = ImageDraw.Draw(glass_mask)
         mask_draw.rounded_rectangle(card_box, radius=card_radius, fill=255)
 
         base_canvas.paste(frosted_glass, (0, 0), glass_mask)
 
-        # 5. Draw Specular Liquid Glass Rim
         overlay = Image.new("RGBA", (1080, 1080), (0, 0, 0, 0))
         draw = ImageDraw.Draw(overlay)
 
@@ -236,7 +224,6 @@ def generate_creative_image(
             width=1,
         )
 
-        # 6. Load Fonts (Segoe UI / Arial)
         try:
             font_badge = ImageFont.truetype("C:/Windows/Fonts/segoeuib.ttf", 22)
             font_title = ImageFont.truetype("C:/Windows/Fonts/segoeuib.ttf", 50)
@@ -251,7 +238,6 @@ def generate_creative_image(
                 font_initials
             ) = ImageFont.load_default()
 
-        # 7. Draw Top Frosted Glass Pill Badge
         pill_box = (135, 230, 465, 284)
         draw.rounded_rectangle(
             pill_box,
@@ -268,7 +254,6 @@ def generate_creative_image(
             font=font_badge,
         )
 
-        # 8. Draw Wrapped News Headline with subtle depth shadow
         wrapped_lines = textwrap.wrap(news_title, width=25)[:5]
         y_text = 345 if len(wrapped_lines) <= 4 else 320
         for line in wrapped_lines:
@@ -283,12 +268,10 @@ def generate_creative_image(
             )
             y_text += 68
 
-        # 9. Draw Frosted Divider Line & Personal Branding Footer
         draw.line(
             [(135, 775), (945, 775)], fill=(255, 255, 255, 65), width=2
         )
 
-        # Left: News Source
         short_source = (
             news_source[:30] + "..." if len(news_source) > 33 else news_source
         )
@@ -299,7 +282,7 @@ def generate_creative_image(
             font=font_source,
         )
 
-        # Right: Author Glass Pill with "SN" Avatar + "Shehan Nadeesha" + "AI/ML Engineer"
+        # Author Glass Pill
         author_pill = (625, 795, 945, 872)
         draw.rounded_rectangle(
             author_pill,
@@ -309,17 +292,7 @@ def generate_creative_image(
             width=1,
         )
 
-        # Avatar circle inside pill
-        draw.ellipse([(638, 809), (688, 859)], fill=(14, 165, 233, 240))
-        draw.text(
-            (663, 834),
-            "SN",
-            fill=(255, 255, 255, 255),
-            font=font_initials,
-            anchor="mm",
-        )
-
-        # Author Name & Role Titles
+        # Author Name & Role Title
         draw.text(
             (702, 806),
             "Shehan Nadeesha",
@@ -333,10 +306,37 @@ def generate_creative_image(
             font=font_role,
         )
 
-        # Finalize & Save Image
-        final_card = Image.alpha_composite(base_canvas, overlay).convert("RGB")
+        # Check if real LinkedIn avatar exists at static/avatar.jpg
+        avatar_path = "static/avatar.jpg"
+        if not os.path.exists(avatar_path):
+            draw.ellipse([(638, 809), (688, 859)], fill=(14, 165, 233, 240))
+            draw.text(
+                (663, 834),
+                "SN",
+                fill=(255, 255, 255, 255),
+                font=font_initials,
+                anchor="mm",
+            )
+
+        final_card = Image.alpha_composite(base_canvas, overlay)
+
+        # Paste circular real profile picture if available
+        if os.path.exists(avatar_path):
+            try:
+                av = (
+                    Image.open(avatar_path)
+                    .convert("RGBA")
+                    .resize((50, 50), Image.Resampling.LANCZOS)
+                )
+                mask = Image.new("L", (50, 50), 0)
+                ImageDraw.Draw(mask).ellipse((0, 0, 50, 50), fill=255)
+                final_card.paste(av, (638, 809), mask)
+            except Exception as av_err:
+                print(f"[WARNING] Could not embed avatar: {av_err}")
+
+        final_rgb = final_card.convert("RGB")
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
-        final_card.save(output_path, "JPEG", quality=95)
+        final_rgb.save(output_path, "JPEG", quality=95)
         print(
             f"[SUCCESS] Apple iOS Liquid Glass Visual saved at: {output_path}"
         )
@@ -345,17 +345,3 @@ def generate_creative_image(
     except Exception as e:
         print(f"[ERROR] Image generation failed: {e}")
         return None
-
-
-# Test execution block
-if __name__ == "__main__":
-    news = fetch_latest_tech_news()
-    if news:
-        print(f"\n--- SELECTED TOPIC ---\n{news['title']}\n")
-
-        post_content = generate_linkedin_post(news["title"], news["source"])
-        print(f"\n--- GENERATED POST ---\n{post_content}\n----------------------\n")
-
-        image_path = generate_creative_image(news["title"], news["source"])
-    else:
-        print("[ERROR] Could not retrieve any news articles.")

@@ -7,3 +7,7 @@ __pycache__/
 
 # Generated Images
 static/generated_images/*.jpg
+
+#profile data
+static/avatar.jpg
+static/profile.json
