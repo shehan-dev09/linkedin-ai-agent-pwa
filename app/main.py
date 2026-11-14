@@ -82,10 +82,10 @@ class PublishRequest(BaseModel):
 
 class RegenerateRequest(BaseModel):
     post_id: int | None = None
-    title: str
-    link: str
-    source: str
-    summary: str = ""
+    title: str | None = ""
+    link: str | None = ""
+    source: str | None = ""
+    summary: str | None = ""
 
 
 class SchedulerUpdateRequest(BaseModel):
@@ -105,7 +105,6 @@ async def serve_pwa():
 
 @app.get("/api/meta")
 async def get_app_meta():
-    """Returns application metadata including the current version."""
     return {
         "status": "success",
         "version": APP_VERSION,
@@ -115,14 +114,12 @@ async def get_app_meta():
 
 @app.get("/api/linkedin/status")
 async def get_linkedin_status():
-    """Checks whether a valid LinkedIn Access Token is configured and active."""
     status = await asyncio.to_thread(verify_linkedin_connection)
     return {"status": "success", "linkedin": status}
 
 
 @app.post("/api/linkedin/token")
 async def update_linkedin_token(request: LinkedInTokenRequest):
-    """Saves a LinkedIn Access Token and immediately verifies it against LinkedIn API."""
     token = request.access_token.strip()
     save_configured_token(token)
     status = await asyncio.to_thread(verify_linkedin_connection, token)
@@ -295,47 +292,86 @@ async def trigger_agent():
 
 @app.post("/api/regenerate")
 async def regenerate_current_draft(request: RegenerateRequest):
+    """
+    Re-synthesizes both the LinkedIn post and the 1080x1080 iOS Liquid Glass card
+    for the currently selected draft, updating SQLite history in-place.
+    """
     try:
+        target_id = request.post_id
+        title = (request.title or "").strip()
+        link = (request.link or "").strip()
+        source = (request.source or "").strip()
+        summary = (request.summary or "").strip()
+
+        # Fallback lookup from SQLite if any field or post_id is missing
+        existing_record = None
+        if target_id:
+            for item in get_post_history(status_filter="all", limit=100):
+                if item["id"] == target_id:
+                    existing_record = item
+                    break
+        if not existing_record:
+            existing_record = get_latest_post_record()
+            if existing_record and not target_id:
+                target_id = existing_record["id"]
+
+        if existing_record:
+            title = title or existing_record.get("title", "")
+            link = link or existing_record.get("link", "")
+            source = source or existing_record.get("source", "AI News")
+
+        if not title:
+            raise HTTPException(status_code=400, detail="No draft headline available to regenerate.")
+
         news_item = {
-            "title": request.title,
-            "link": request.link,
-            "source": request.source,
-            "summary": request.summary
+            "title": title,
+            "link": link,
+            "source": source or "AI News",
+            "summary": summary
         }
+
         post_text = await asyncio.to_thread(generate_linkedin_post, news_item)
         image_path = await asyncio.to_thread(generate_creative_image, news_item["title"], news_item["source"])
+        normalized_path = image_path.replace("\\", "/").lstrip("/")
         timestamp = int(datetime.now().timestamp())
-        image_url = f"/{image_path.replace(os.sep, '/')}?t={timestamp}"
+        image_url = f"/{normalized_path}?t={timestamp}"
 
-        if request.post_id:
-            update_draft_content(request.post_id, post_text, image_url, image_path)
+        # Clean up previous image file if regenerating an existing SQLite record
+        if existing_record and existing_record.get("image_path"):
+            old_path = existing_record["image_path"]
+            if old_path != normalized_path and os.path.exists(old_path):
+                try:
+                    os.remove(old_path)
+                except Exception:
+                    pass
+
+        if target_id:
+            update_draft_content(target_id, post_text, image_url, normalized_path)
 
         result = {
-            "post_id": request.post_id,
+            "post_id": target_id,
             "news": news_item,
             "post_text": post_text,
-            "image_path": image_path,
+            "image_path": normalized_path,
             "image_url": image_url,
-            "record_status": "draft"
+            "record_status": existing_record.get("status", "draft") if existing_record else "draft"
         }
         with open(DRAFT_FILE_PATH, "w", encoding="utf-8") as f:
             json.dump(result, f, indent=2)
+
         return {"status": "success", "data": result, "stats": get_agent_stats()}
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/api/publish")
 async def approve_and_publish(request: PublishRequest):
-    """
-    Publishes the approved draft (post copy + 1080x1080 Liquid Glass card)
-    to LinkedIn via the official REST API (or Sandbox Mode if unconfigured).
-    """
     try:
         target_id = request.post_id
         image_path = None
 
-        # Resolve the target draft and its local image path
         latest = get_latest_post_record()
         if not target_id and latest:
             target_id = latest["id"]
@@ -349,7 +385,6 @@ async def approve_and_publish(request: PublishRequest):
         if not image_path and latest:
             image_path = latest.get("image_path")
 
-        # Execute LinkedIn publish in worker thread
         publish_result = await asyncio.to_thread(
             publish_to_linkedin,
             request.final_text,

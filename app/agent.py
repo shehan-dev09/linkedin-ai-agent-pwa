@@ -1,383 +1,602 @@
 import os
+import re
+import json
 import time
 import random
-import textwrap
 from io import BytesIO
-from pathlib import Path
-from datetime import datetime
-import feedparser
+from typing import Dict, Any, List, Optional
+
 import requests
+import feedparser
 from PIL import Image, ImageDraw, ImageFont, ImageFilter, ImageEnhance, ImageOps
 from dotenv import load_dotenv
 
-from app.storage import is_topic_seen, mark_topic_seen
+from app.storage import is_topic_seen, mark_topic_seen, save_post_record
 
-# Load environment variables from .env file
 load_dotenv()
 
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
+PROFILE_FILE_PATH = "static/profile.json"
+AVATAR_FILE_PATH = "static/avatar.jpg"
+OUTPUT_DIR = "static/generated_images"
 
-IMAGE_DIR = Path("static/generated_images")
-IMAGE_DIR.mkdir(parents=True, exist_ok=True)
-AVATAR_PATH = Path("static/avatar.jpg")
-
-# Curated high-resolution editorial tech backgrounds (100% watermark-free)
+# Curated high-resolution dark abstract/tech backgrounds for iOS Liquid Glass
 UNSPLASH_TECH_BACKGROUNDS = [
     "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=85",
     "https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?auto=format&fit=crop&w=1200&q=85",
+    "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&w=1200&q=85",
     "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=1200&q=85",
     "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1200&q=85",
     "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&w=1200&q=85",
-    "https://images.unsplash.com/photo-1509228468518-180dd4864904?auto=format&fit=crop&w=1200&q=85",
-    "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=1200&q=85"
-]
-
-# RSS feeds focused on strictly recent AI/ML breakthroughs
-RSS_FEEDS = [
-    # Primary: Last 24 hours AI/ML news
-    "https://news.google.com/rss/search?q=(Artificial+Intelligence+OR+Machine+Learning+OR+LLM+OR+Deep+Learning)+when:1d&hl=en-US&gl=US&ceid=US:en",
-    # Secondary fallback: Last 7 days if all 24h stories were already used
-    "https://news.google.com/rss/search?q=(OpenAI+OR+Anthropic+OR+PyTorch+OR+NVIDIA+AI+OR+Hugging+Face)+when:7d&hl=en-US&gl=US&ceid=US:en"
 ]
 
 
-def get_available_gemini_models() -> list[str]:
-    """Query Google API dynamically to find active text generation models."""
-    if not GEMINI_API_KEY:
-        return []
+def load_author_profile() -> Dict[str, str]:
+    """Load author branding from static/profile.json with defaults."""
+    default = {
+        "name": "Shehan Nadeesha",
+        "headline": "AI/ML Engineer",
+        "linkedin_url": "https://www.linkedin.com/in/shehan-nadeesha/"
+    }
+    if os.path.exists(PROFILE_FILE_PATH):
+        try:
+            with open(PROFILE_FILE_PATH, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                return {**default, **data}
+        except Exception:
+            pass
+    return default
+
+
+def clean_html_summary(raw_html: str) -> str:
+    """Strip HTML tags and extra whitespace from RSS summaries."""
+    if not raw_html:
+        return ""
+    text = re.sub(r"<[^>]+>", " ", raw_html)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text[:500]
+
+
+def fetch_latest_tech_news() -> Dict[str, str]:
+    """
+    Fetch breaking AI/ML news from the last 24 hours sorted newest-first,
+    skipping any article already recorded in SQLite seen_topics.
+    """
+    rss_urls = [
+        "https://news.google.com/rss/search?q=(Artificial+Intelligence+OR+Machine+Learning+OR+LLM+OR+Deep+Learning)+when:1d&hl=en-US&gl=US&ceid=US:en",
+        "https://news.google.com/rss/search?q=(OpenAI+OR+Anthropic+OR+DeepMind+OR+NVIDIA+AI+OR+Transformer+Model)+when:1d&hl=en-US&gl=US&ceid=US:en",
+        "https://news.google.com/rss/search?q=(Artificial+Intelligence+OR+Machine+Learning+OR+LLM)+when:7d&hl=en-US&gl=US&ceid=US:en",
+    ]
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+    }
+
+    collected_entries = []
+    for url in rss_urls:
+        try:
+            resp = requests.get(url, headers=headers, timeout=10)
+            if resp.status_code == 200:
+                feed = feedparser.parse(resp.content)
+                if feed.entries:
+                    collected_entries.extend(feed.entries)
+            if len(collected_entries) >= 35:
+                break
+        except Exception as e:
+            print(f"Warning: RSS fetch failed for {url}: {e}")
+
+    if not collected_entries:
+        raise RuntimeError("Could not fetch AI/ML news feeds. Check your internet connection.")
+
+    def get_entry_timestamp(entry: Any) -> float:
+        parsed_time = getattr(entry, "published_parsed", None) or getattr(entry, "updated_parsed", None)
+        if parsed_time:
+            try:
+                return time.mktime(parsed_time)
+            except Exception:
+                return 0.0
+        return 0.0
+
+    collected_entries.sort(key=get_entry_timestamp, reverse=True)
+
+    for entry in collected_entries:
+        raw_title = getattr(entry, "title", "").strip()
+        link = getattr(entry, "link", "").strip()
+        if not raw_title:
+            continue
+
+        if " - " in raw_title:
+            clean_title, source_name = raw_title.rsplit(" - ", 1)
+        else:
+            clean_title = raw_title
+            source_obj = getattr(entry, "source", None)
+            source_name = getattr(source_obj, "title", "AI Research Wire") if source_obj else "AI Research Wire"
+
+        clean_title = clean_title.strip()
+        source_name = source_name.strip()
+
+        if not is_topic_seen(clean_title, link):
+            mark_topic_seen(clean_title, link, source_name)
+            summary = clean_html_summary(getattr(entry, "summary", ""))
+            return {
+                "title": clean_title,
+                "source": source_name,
+                "link": link,
+                "summary": summary
+            }
+
+    top = collected_entries[0]
+    raw_title = getattr(top, "title", "Latest Advances in Foundation Models")
+    clean_title = raw_title.rsplit(" - ", 1)[0].strip()
+    source_name = raw_title.rsplit(" - ", 1)[1].strip() if " - " in raw_title else "AI News"
+    link = getattr(top, "link", "")
+    return {
+        "title": clean_title,
+        "source": source_name,
+        "link": link,
+        "summary": clean_html_summary(getattr(top, "summary", ""))
+    }
+
+
+def get_available_gemini_models(api_key: str) -> List[str]:
+    """Dynamically discover text-generation models supported by the user's Gemini API key."""
+    url = f"https://generativelanguage.googleapis.com/v1beta/models?key={api_key}"
     try:
-        url = f"https://generativelanguage.googleapis.com/v1beta/models?key={GEMINI_API_KEY}"
         resp = requests.get(url, timeout=8)
         if resp.status_code != 200:
             return []
-
-        data = resp.json()
-        models = []
-        for m in data.get("models", []):
+        models_data = resp.json().get("models", [])
+        usable = []
+        for m in models_data:
             name = m.get("name", "")
             methods = m.get("supportedGenerationMethods", [])
-            if "generateContent" in methods and ("gemini" in name or "gemma" in name):
-                if not any(skip in name for skip in ["vision", "image", "tts", "audio", "embedding", "robotics"]):
-                    models.append(name)
+            if "generateContent" in methods and not any(
+                skip in name for skip in ("vision", "embedding", "imagen", "aqa", "audio", "tts")
+            ):
+                usable.append(name)
 
-        def priority_key(model_name: str) -> int:
+        def sort_priority(model_name: str) -> int:
             if "gemma-3-27b-it" in model_name:
                 return 0
-            if "lite" in model_name:
+            if "gemini-2.0-flash-lite" in model_name:
                 return 1
-            if "pro" in model_name:
+            if "gemini-2.0-flash" in model_name:
                 return 2
-            if "flash" in model_name:
+            if "gemini-1.5-flash" in model_name:
                 return 3
-            return 4
+            if "lite" in model_name:
+                return 4
+            if "flash" in model_name:
+                return 5
+            return 6
 
-        models.sort(key=priority_key)
-        return models
-    except Exception as e:
-        print(f"⚠️ Failed to list Gemini models: {e}")
+        usable.sort(key=sort_priority)
+        return usable
+    except Exception:
         return []
 
 
-def generate_text_fast(prompt: str) -> str:
-    """Call Gemini REST API directly with strict timeout and automatic fallback."""
-    models = get_available_gemini_models()
+def generate_text_fast(prompt: str) -> Optional[str]:
+    """Call Google AI Studio REST API directly with fast failover across available models."""
+    load_dotenv(override=True)
+    api_key = os.getenv("GEMINI_API_KEY", "").strip()
+    if not api_key:
+        return None
+
+    models = get_available_gemini_models(api_key)
     if not models:
-        models = ["models/gemma-3-27b-it", "models/gemini-2.0-flash-lite", "models/gemini-2.5-pro"]
+        models = [
+            "models/gemma-3-27b-it",
+            "models/gemini-2.0-flash-lite",
+            "models/gemini-2.0-flash",
+            "models/gemini-1.5-flash"
+        ]
 
     for model_name in models[:5]:
-        try:
-            print(f"🤖 Trying AI model: {model_name}...")
-            url = f"https://generativelanguage.googleapis.com/v1beta/{model_name}:generateContent?key={GEMINI_API_KEY}"
-            payload = {
-                "contents": [{"parts": [{"text": prompt}]}],
-                "generationConfig": {"temperature": 0.7, "maxOutputTokens": 650}
+        endpoint = f"https://generativelanguage.googleapis.com/v1beta/{model_name}:generateContent?key={api_key}"
+        payload = {
+            "contents": [{"parts": [{"text": prompt}]}],
+            "generationConfig": {
+                "temperature": 0.75,
+                "maxOutputTokens": 650
             }
-            response = requests.post(url, json=payload, timeout=12)
-
-            if response.status_code == 200:
-                data = response.json()
+        }
+        try:
+            resp = requests.post(endpoint, json=payload, timeout=12)
+            if resp.status_code == 200:
+                data = resp.json()
                 candidates = data.get("candidates", [])
                 if candidates:
                     parts = candidates[0].get("content", {}).get("parts", [])
-                    if parts and "text" in parts[0]:
-                        text = parts[0]["text"].strip()
-                        if len(text) > 80:
-                            print(f"✅ Text generated via {model_name}!")
-                            return text
-            else:
-                print(f"⚠️ {model_name} HTTP {response.status_code}. Switching model...")
+                    if parts and parts[0].get("text"):
+                        return parts[0]["text"].strip()
         except Exception as e:
-            print(f"⚠️ {model_name} timed out or failed ({e}). Switching model...")
-
-    return ""
-
-
-def fetch_latest_tech_news() -> dict:
-    """
-    Fetch the latest AI/ML news sorted strictly from newest to oldest,
-    filtering out any article that has already been generated in SQLite.
-    """
-    print("🔍 Scanning live AI/ML RSS feeds for the latest unseen news...")
-
-    for feed_url in RSS_FEEDS:
-        feed = feedparser.parse(feed_url)
-        if not feed.entries:
+            print(f"Warning: Model {model_name} timed out or failed: {e}")
             continue
 
-        # Sort entries chronologically (newest published timestamp first)
-        sorted_entries = sorted(
-            feed.entries,
-            key=lambda entry: entry.get("published_parsed") or time.gmtime(0),
-            reverse=True
-        )
-
-        for entry in sorted_entries:
-            raw_title = entry.get("title", "New AI Breakthrough")
-            clean_title = raw_title.rsplit(" - ", 1)[0].strip()
-            link = entry.get("link", "")
-            source = entry.get("source", {}).get("title", "AI Research Wire")
-            published_str = entry.get("published", datetime.now().strftime("%Y-%m-%d %H:%M UTC"))
-
-            # Check SQLite deduplication table so we NEVER repeat an old news topic
-            if not is_topic_seen(clean_title, link):
-                mark_topic_seen(clean_title, link, source)
-                print(f"✨ Selected fresh unseen news: {clean_title} ({published_str})")
-                return {
-                    "title": clean_title,
-                    "link": link,
-                    "published": published_str,
-                    "source": source
-                }
-
-    # Ultimate fallback if somehow every single article in the feed was seen
-    fallback_entry = feedparser.parse(RSS_FEEDS[0]).entries[0]
-    clean_title = fallback_entry.title.rsplit(" - ", 1)[0].strip()
-    return {
-        "title": clean_title,
-        "link": fallback_entry.link,
-        "published": fallback_entry.get("published", "Just now"),
-        "source": fallback_entry.get("source", {}).get("title", "AI News")
-    }
+    return None
 
 
-def generate_linkedin_post(news_item: dict) -> dict:
-    """Generate an authentic AI/ML Engineer LinkedIn post."""
-    prompt = f"""
-    You are an experienced AI/ML Engineer and Technical Thought Leader writing a high-impact LinkedIn post.
-    
-    News Title: {news_item['title']}
-    News Source: {news_item['source']}
-    
-    Instructions:
-    1. Write an engaging, insightful LinkedIn post from the perspective of an AI/ML Engineer analyzing this news.
-    2. Start with a strong hook on the first line (NO clichés like "Exciting news!" or "Buckle up!").
-    3. Use short, clean paragraphs with empty lines between them for mobile readability.
-    4. Provide 3 concise bullet points explaining the technical impact on AI/ML workflows, model deployment, or real-world AI engineering.
-    5. End with a thoughtful technical question to encourage comments from fellow AI engineers and developers.
-    6. Include 4 to 5 relevant hashtags at the bottom (e.g., #MachineLearning #AIEngineering #ArtificialIntelligence #LLM #DeepLearning).
-    7. Do NOT include any markdown formatting like **bold** or ## headers because LinkedIn plain text does not render markdown.
-    8. Output ONLY the final LinkedIn post text.
-    """
+def generate_linkedin_post(news_item: Dict[str, str]) -> str:
+    """Synthesize an authoritative AI/ML Engineer LinkedIn post for the selected article."""
+    profile = load_author_profile()
+    title = news_item.get("title", "")
+    source = news_item.get("source", "AI News")
+    link = news_item.get("link", "")
+    summary = news_item.get("summary", "")
 
-    post_text = generate_text_fast(prompt)
-    clean_Headline = news_item['title']
+    prompt = f"""You are {profile['name']}, an {profile['headline']}.
+Write a high-impact, technically insightful LinkedIn post analyzing this breaking AI/ML news from the last 24 hours:
 
-    if not post_text:
-        post_text = (
-            f"{clean_Headline}\n\n"
-            f"The pace of innovation across AI and Machine Learning infrastructure continues to accelerate. "
-            f"According to recent updates from {news_item['source']}, this development marks an important shift for applied AI engineering.\n\n"
-            f"Key takeaways for AI/ML Engineers:\n"
-            f"• Model Efficiency: Pushing higher performance-per-compute ratios in production workloads.\n"
-            f"• Deployment Architecture: Changing how teams design scalable inference and agentic pipelines.\n"
-            f"• Production Readiness: Moving rapidly from research benchmarks into real-world AI systems.\n\n"
-            f"How do you see this impacting your ML pipelines or AI stack over the next quarter?\n\n"
-            f"Read more: {news_item['link']}\n\n"
-            f"#AIEngineering #MachineLearning #ArtificialIntelligence #DeepLearning #TechInnovation"
-        )
-    else:
-        post_text = post_text.replace("**", "").replace("##", "").strip()
-        if news_item["link"] not in post_text:
-            post_text += f"\n\nSource: {news_item['link']}"
+Headline: {title}
+Source: {source}
+Context: {summary}
 
-    return {
-        "post_text": post_text,
-        "image_prompt": "iOS Liquid Glass Visual Card (1080x1080)"
-    }
+Strict formatting rules:
+1. Start with a sharp, scroll-stopping 1-sentence engineering hook (no cringe cliches like "Buckle up" or "Game changer").
+2. Explain what happened in 2 concise sentences.
+3. Add a short section with 3 bullet points (using •) covering why this matters for AI/ML Engineers, model deployment, or production systems.
+4. End with a thoughtful technical question to spark comments from other engineers.
+5. Include the source link on its own line: Source: {link}
+6. Add 5 relevant hashtags at the very bottom (#AIEngineering #MachineLearning #LLM #DeepLearning #TechNews).
+7. Do NOT use markdown bold asterisks (**text**) because LinkedIn plain text does not render markdown bold. Keep paragraphs clean and well-spaced."""
+
+    generated = generate_text_fast(prompt)
+    if generated:
+        return generated.replace("**", "").strip()
+
+    return (
+        f"{title}\n\n"
+        f"New developments reported by {source} highlight how rapidly the AI/ML engineering landscape is shifting from experimental research to production-grade systems.\n\n"
+        f"Key takeaways for AI/ML Engineers:\n"
+        f"• Inference efficiency and system reliability are becoming just as critical as raw benchmark scores.\n"
+        f"• Teams building with LLMs and autonomous agents need modular architectures to adapt to rapid model releases.\n"
+        f"• Production governance, latency optimization, and evaluation pipelines remain the real engineering moat.\n\n"
+        f"How is your team adapting your ML stack to handle these latest shifts?\n\n"
+        f"Source: {link}\n\n"
+        f"#AIEngineering #MachineLearning #LLM #DeepLearning #ArtificialIntelligence"
+    )
 
 
-def _load_font(size: int, bold: bool = False) -> ImageFont.FreeTypeFont:
-    """Load clean system sans-serif fonts on Windows/Linux with safe fallback."""
+def _create_fallback_studio_background(size: int = 1080) -> Image.Image:
+    """Create a rich dark abstract gradient canvas with ambient light orbs."""
+    base = Image.new("RGB", (size, size), (9, 11, 20))
+    draw = ImageDraw.Draw(base)
+
+    for y in range(size):
+        ratio = y / size
+        r = int(8 + 16 * (1 - ratio))
+        g = int(12 + 24 * ratio)
+        b = int(24 + 44 * (1 - ratio * 0.5))
+        draw.line([(0, y), (size, y)], fill=(r, g, b))
+
+    overlay = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    odraw = ImageDraw.Draw(overlay)
+    odraw.ellipse((60, 60, 680, 680), fill=(56, 189, 248, 55))
+    odraw.ellipse((400, 360, 1020, 980), fill=(99, 102, 241, 60))
+    overlay = overlay.filter(ImageFilter.GaussianBlur(radius=100))
+
+    return Image.alpha_composite(base.convert("RGBA"), overlay).convert("RGB")
+
+
+def _load_font(size: int, bold: bool = False) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
+    """Load clean system sans-serif fonts on Windows/Linux/macOS."""
     candidates = (
         ["segoeuib.ttf", "arialbd.ttf", "calibrib.ttf", "DejaVuSans-Bold.ttf"]
-        if bold else
-        ["segoeui.ttf", "arial.ttf", "calibri.ttf", "DejaVuSans.ttf"]
+        if bold
+        else ["segoeui.ttf", "arial.ttf", "calibri.ttf", "DejaVuSans.ttf"]
     )
     for font_name in candidates:
         try:
-            return ImageFont.truetype(font_name, size=size)
+            return ImageFont.truetype(font_name, size)
         except Exception:
             continue
     return ImageFont.load_default()
 
 
-def _create_liquid_glass_background() -> Image.Image:
-    """Fetch a high-res photo or build a deep rich gradient background."""
-    bg_url = random.choice(UNSPLASH_TECH_BACKGROUNDS)
-    try:
-        resp = requests.get(bg_url, timeout=8)
-        if resp.status_code == 200:
-            img = Image.open(BytesIO(resp.content)).convert("RGBA")
-            img = img.resize((1080, 1080), Image.Resampling.LANCZOS)
-            img = ImageEnhance.Brightness(img).enhance(0.68)
-            img = ImageEnhance.Color(img).enhance(1.30)
-            return img
-    except Exception as e:
-        print(f"⚠️ Background fetch fallback used: {e}")
+def _wrap_text_by_pixel_width(
+    draw: ImageDraw.ImageDraw,
+    text: str,
+    font: ImageFont.FreeTypeFont | ImageFont.ImageFont,
+    max_width: int
+) -> List[str]:
+    """Wrap text strictly by measured pixel width so lines never overflow the card."""
+    words = text.split()
+    if not words:
+        return []
 
-    img = Image.new("RGBA", (1080, 1080), (12, 16, 32, 255))
-    draw = ImageDraw.Draw(img)
-    for y in range(1080):
-        r = int(14 + (y / 1080) * 28)
-        g = int(20 + (y / 1080) * 15)
-        b = int(48 + (y / 1080) * 65)
-        draw.line([(0, y), (1080, y)], fill=(r, g, b, 255))
-    return img
+    lines: List[str] = []
+    current_line = words[0]
+
+    for word in words[1:]:
+        test_line = f"{current_line} {word}"
+        bbox = draw.textbbox((0, 0), test_line, font=font)
+        line_w = bbox[2] - bbox[0]
+        if line_w <= max_width:
+            current_line = test_line
+        else:
+            lines.append(current_line)
+            current_line = word
+
+    lines.append(current_line)
+    return lines
 
 
-def _paste_circular_avatar(canvas: Image.Image, draw: ImageDraw.ImageDraw, x: int, y: int, size: int) -> None:
-    """Render user's real profile picture as a circle, or fallback to SN badge."""
-    if AVATAR_PATH.exists():
+def _create_supersampled_rounded_mask(width: int, height: int, radius: int) -> Image.Image:
+    """Create a 4x supersampled anti-aliased rounded rectangle mask for smooth iOS corners."""
+    scale = 4
+    big_mask = Image.new("L", (width * scale, height * scale), 0)
+    bdraw = ImageDraw.Draw(big_mask)
+    bdraw.rounded_rectangle(
+        (0, 0, width * scale - 1, height * scale - 1),
+        radius=radius * scale,
+        fill=255
+    )
+    return big_mask.resize((width, height), resample=Image.Resampling.LANCZOS)
+
+
+def _create_supersampled_circle_mask(diameter: int) -> Image.Image:
+    """Create a 4x supersampled anti-aliased circle mask for razor-sharp avatars."""
+    scale = 4
+    big_mask = Image.new("L", (diameter * scale, diameter * scale), 0)
+    bdraw = ImageDraw.Draw(big_mask)
+    bdraw.ellipse((0, 0, diameter * scale - 1, diameter * scale - 1), fill=255)
+    return big_mask.resize((diameter, diameter), resample=Image.Resampling.LANCZOS)
+
+
+def generate_creative_image(headline: str, source: str = "AI NEWS") -> str:
+    """
+    Render a 100% watermark-free 1080x1080 Apple iOS Liquid Glass card.
+    Features pixel-measured typography, supersampled rounded glass refraction,
+    and a clean author footer (Avatar + Shehan Nadeesha + AI/ML Engineer) with zero overlap.
+    """
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+    profile = load_author_profile()
+    author_name = profile.get("name", "Shehan Nadeesha").strip()
+    author_role = profile.get("headline", "AI/ML Engineer").strip()
+
+    canvas_size = 1080
+    bg_img = None
+
+    shuffled_urls = random.sample(UNSPLASH_TECH_BACKGROUNDS, len(UNSPLASH_TECH_BACKGROUNDS))
+    for url in shuffled_urls[:2]:
         try:
-            avatar_img = Image.open(AVATAR_PATH).convert("RGBA")
-            avatar_img = ImageOps.fit(avatar_img, (size, size), Image.Resampling.LANCZOS)
+            resp = requests.get(url, timeout=6)
+            if resp.status_code == 200:
+                img = Image.open(BytesIO(resp.content)).convert("RGB")
+                bg_img = ImageOps.fit(img, (canvas_size, canvas_size), method=Image.Resampling.LANCZOS)
+                break
+        except Exception:
+            continue
 
-            mask = Image.new("L", (size, size), 0)
-            mask_draw = ImageDraw.Draw(mask)
-            mask_draw.ellipse((0, 0, size, size), fill=255)
+    if bg_img is None:
+        bg_img = _create_fallback_studio_background(canvas_size)
 
-            canvas.paste(avatar_img, (x, y), mask)
-            draw.ellipse([x, y, x + size, y + size], outline=(255, 255, 255, 210), width=3)
-            return
+    # Darken background slightly and add soft ambient color orbs so glass refraction pops
+    bg_img = ImageEnhance.Brightness(bg_img).enhance(0.50)
+    bg_img = ImageEnhance.Color(bg_img).enhance(1.20)
+    bg_rgba = bg_img.convert("RGBA")
+
+    ambient = Image.new("RGBA", (canvas_size, canvas_size), (0, 0, 0, 0))
+    adraw = ImageDraw.Draw(ambient)
+    adraw.ellipse((90, 90, 560, 560), fill=(56, 189, 248, 42))
+    adraw.ellipse((520, 500, 990, 970), fill=(16, 185, 129, 38))
+    ambient = ambient.filter(ImageFilter.GaussianBlur(radius=90))
+    bg_rgba = Image.alpha_composite(bg_rgba, ambient)
+
+    # Glass Card Coordinates
+    card_x1, card_y1 = 84, 104
+    card_x2, card_y2 = 996, 976
+    card_w = card_x2 - card_x1  # 912px
+    card_h = card_y2 - card_y1  # 872px
+    corner_radius = 48
+
+    # Soft elevation shadow under the glass card
+    shadow = Image.new("RGBA", (canvas_size, canvas_size), (0, 0, 0, 0))
+    sdraw = ImageDraw.Draw(shadow)
+    sdraw.rounded_rectangle(
+        (card_x1 + 6, card_y1 + 20, card_x2 + 6, card_y2 + 20),
+        radius=corner_radius,
+        fill=(0, 0, 0, 155)
+    )
+    shadow = shadow.filter(ImageFilter.GaussianBlur(radius=36))
+    bg_rgba = Image.alpha_composite(bg_rgba, shadow)
+
+    # Frosted Liquid Glass Refraction
+    glass_crop = bg_rgba.crop((card_x1, card_y1, card_x2, card_y2))
+    glass_blurred = glass_crop.filter(ImageFilter.GaussianBlur(radius=34))
+
+    # Translucent dark frost tint + top specular gradient
+    frost_tint = Image.new("RGBA", (card_w, card_h), (18, 20, 28, 182))
+    glass_surface = Image.alpha_composite(glass_blurred, frost_tint)
+
+    sheen = Image.new("RGBA", (card_w, card_h), (0, 0, 0, 0))
+    sh_draw = ImageDraw.Draw(sheen)
+    sh_draw.polygon(
+        [(0, 0), (card_w, 0), (card_w, int(card_h * 0.36)), (0, int(card_h * 0.18))],
+        fill=(255, 255, 255, 18)
+    )
+    glass_surface = Image.alpha_composite(glass_surface, sheen)
+
+    card_mask = _create_supersampled_rounded_mask(card_w, card_h, corner_radius)
+    bg_rgba.paste(glass_surface, (card_x1, card_y1), card_mask)
+
+    draw = ImageDraw.Draw(bg_rgba)
+
+    # Outer and inner iOS Liquid Glass specular borders
+    draw.rounded_rectangle(
+        (card_x1, card_y1, card_x2, card_y2),
+        radius=corner_radius,
+        outline=(255, 255, 255, 78),
+        width=2
+    )
+    draw.rounded_rectangle(
+        (card_x1 + 3, card_y1 + 3, card_x2 - 3, card_y2 - 3),
+        radius=corner_radius - 2,
+        outline=(255, 255, 255, 20),
+        width=1
+    )
+
+    # Content margins inside the glass card
+    pad_x = 68
+    x_left = card_x1 + pad_x    # 152
+    x_right = card_x2 - pad_x   # 928
+    max_text_width = x_right - x_left  # 776px
+
+    # --- 1. TOP HEADER BAR (Category Pill + Source Name) ---
+    top_y = card_y1 + 64
+    font_badge = _load_font(20, bold=True)
+    font_source = _load_font(20, bold=True)
+
+    badge_label = "AI & ML BRIEFING"
+    badge_bbox = draw.textbbox((0, 0), badge_label, font=font_badge)
+    badge_text_w = badge_bbox[2] - badge_bbox[0]
+    pill_w = badge_text_w + 62
+    pill_h = 44
+
+    # Solid white pill so near-black badge text stays readable on any background
+    draw.rounded_rectangle(
+        (x_left, top_y, x_left + pill_w, top_y + pill_h),
+        radius=22,
+        fill=(245, 245, 247, 255),
+        outline=(255, 255, 255, 255),
+        width=1
+    )
+    # Emerald indicator dot inside pill
+    draw.ellipse((x_left + 18, top_y + 16, x_left + 30, top_y + 28), fill=(16, 185, 129, 255))
+    # Near-black badge text for contrast on the white pill
+    draw.text((x_left + 40, top_y + 22), badge_label, font=font_badge, fill=(15, 15, 18, 255), anchor="lm")
+    # Right-aligned news source name
+    clean_source = (source or "AI NEWS").upper().strip()
+    if len(clean_source) > 22:
+        clean_source = clean_source[:20].rstrip() + "…"
+    draw.text((x_right, top_y + 22), clean_source, font=font_source, fill=(161, 161, 170, 230), anchor="rm")
+
+    # --- 2. MAIN HEADLINE (Pixel-Measured & Vertically Centered) ---
+    clean_headline = headline.rsplit(" - ", 1)[0].strip()
+
+    # Select optimal font size so headline fits comfortably between y=250 and y=725
+    headline_font_size = 48
+    font_headline = _load_font(headline_font_size, bold=True)
+    wrapped_lines = _wrap_text_by_pixel_width(draw, clean_headline, font_headline, max_text_width)
+
+    if len(wrapped_lines) > 5:
+        headline_font_size = 42
+        font_headline = _load_font(headline_font_size, bold=True)
+        wrapped_lines = _wrap_text_by_pixel_width(draw, clean_headline, font_headline, max_text_width)
+
+    if len(wrapped_lines) > 6:
+        wrapped_lines = wrapped_lines[:6]
+        wrapped_lines[-1] = wrapped_lines[-1].rstrip(" .,;:-") + "…"
+
+    line_height = int(headline_font_size * 1.34)
+    total_text_h = len(wrapped_lines) * line_height
+
+    zone_top = top_y + pill_h + 42     # 250
+    divider_y = card_y2 - 196          # 780
+    zone_bottom = divider_y - 36       # 744
+    available_h = zone_bottom - zone_top
+
+    start_y = zone_top + max(0, (available_h - total_text_h) // 2)
+
+    curr_y = start_y
+    for line in wrapped_lines:
+        draw.text((x_left, curr_y), line, font=font_headline, fill=(250, 250, 250, 255))
+        curr_y += line_height
+
+    # --- 3. SUBTLE FROSTED DIVIDER ---
+    draw.line([(x_left, divider_y), (x_right, divider_y)], fill=(255, 255, 255, 38), width=1)
+
+    # --- 4. AUTHOR IDENTITY FOOTER (Zero Overlap, Supersampled Circular DP) ---
+    avatar_size = 88
+    avatar_x = x_left
+    avatar_y = divider_y + 38  # 818 (bottom at 906, 70px above card bottom)
+
+    avatar_rendered = False
+    if os.path.exists(AVATAR_FILE_PATH):
+        try:
+            av_img = Image.open(AVATAR_FILE_PATH).convert("RGBA")
+            av_img = ImageOps.fit(av_img, (avatar_size, avatar_size), method=Image.Resampling.LANCZOS)
+            av_mask = _create_supersampled_circle_mask(avatar_size)
+            bg_rgba.paste(av_img, (avatar_x, avatar_y), av_mask)
+
+            # Crisp glass ring around avatar
+            draw.ellipse(
+                (avatar_x - 2, avatar_y - 2, avatar_x + avatar_size + 2, avatar_y + avatar_size + 2),
+                outline=(0, 0, 0, 175),
+                width=2
+            )
+            avatar_rendered = True
         except Exception as e:
-            print(f"⚠️ Avatar load error: {e}")
+            print(f"Avatar render fallback: {e}")
 
-    font_avatar = _load_font(26, bold=True)
-    draw.ellipse([x, y, x + size, y + size], fill=(56, 189, 248, 45), outline=(56, 189, 248, 200), width=2)
-    draw.text((x + 17, y + 18), "SN", font=font_avatar, fill=(255, 255, 255, 255))
-
-
-def generate_creative_image(image_prompt: str, headline: str = "", source: str = "AI RESEARCH") -> str:
-    """
-    Create an Apple iOS Liquid Glass 1080x1080 visual card featuring
-    Shehan Nadeesha | AI/ML Engineer and real profile photo.
-    """
-    print("🎨 Rendering iOS Liquid Glass 1080x1080 card...")
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    image_path = IMAGE_DIR / f"post_{timestamp}.jpg"
-
-    base_img = _create_liquid_glass_background()
-
-    # Ambient light orbs behind glass
-    glow_layer = Image.new("RGBA", (1080, 1080), (0, 0, 0, 0))
-    glow_draw = ImageDraw.Draw(glow_layer)
-    glow_draw.ellipse([80, 80, 560, 560], fill=(56, 189, 248, 95))
-    glow_draw.ellipse([540, 500, 1000, 960], fill=(139, 92, 246, 95))
-    glow_draw.ellipse([260, 620, 680, 1020], fill=(16, 185, 129, 65))
-    glow_layer = glow_layer.filter(ImageFilter.GaussianBlur(radius=95))
-    base_img = Image.alpha_composite(base_img, glow_layer)
-
-    # Frosted Liquid Glass Card
-    card_box = (85, 115, 995, 965)
-    card_w = card_box[2] - card_box[0]
-    card_h = card_box[3] - card_box[1]
-
-    cropped_region = base_img.crop(card_box).filter(ImageFilter.GaussianBlur(radius=38))
-    cropped_region = ImageEnhance.Brightness(cropped_region).enhance(1.12)
-
-    mask = Image.new("L", (card_w, card_h), 0)
-    mask_draw = ImageDraw.Draw(mask)
-    mask_draw.rounded_rectangle([0, 0, card_w, card_h], radius=56, fill=255)
-
-    frost_tint = Image.new("RGBA", (card_w, card_h), (255, 255, 255, 0))
-    tint_draw = ImageDraw.Draw(frost_tint)
-    for y in range(card_h):
-        alpha = int(58 - (y / card_h) * 32)
-        tint_draw.line([(0, y), (card_w, y)], fill=(255, 255, 255, max(18, alpha)))
-
-    sheen = Image.new("RGBA", (card_w, card_h), (255, 255, 255, 0))
-    sheen_draw = ImageDraw.Draw(sheen)
-    sheen_draw.polygon([(0, 0), (card_w, 0), (int(card_w * 0.65), int(card_h * 0.45)), (0, int(card_h * 0.25))], fill=(255, 255, 255, 22))
-
-    frosted_card = Image.alpha_composite(cropped_region, frost_tint)
-    frosted_card = Image.alpha_composite(frosted_card, sheen)
-
-    shadow = Image.new("RGBA", (1080, 1080), (0, 0, 0, 0))
-    shadow_draw = ImageDraw.Draw(shadow)
-    shadow_draw.rounded_rectangle([card_box[0] + 10, card_box[1] + 24, card_box[2] + 10, card_box[3] + 24], radius=56, fill=(0, 0, 0, 115))
-    shadow = shadow.filter(ImageFilter.GaussianBlur(radius=30))
-    base_img = Image.alpha_composite(base_img, shadow)
-
-    base_img.paste(frosted_card, (card_box[0], card_box[1]), mask)
-
-    overlay = Image.new("RGBA", (1080, 1080), (0, 0, 0, 0))
-    draw = ImageDraw.Draw(overlay)
-
-    draw.rounded_rectangle(card_box, radius=56, outline=(255, 255, 255, 115), width=3)
-    draw.rounded_rectangle([card_box[0] + 3, card_box[1] + 3, card_box[2] - 3, card_box[3] - 3], radius=53, outline=(255, 255, 255, 35), width=1)
-
-    font_pill = _load_font(23, bold=True)
-    font_title = _load_font(52, bold=True)
-    font_source = _load_font(25, bold=False)
-    font_brand = _load_font(28, bold=True)
+    font_author = _load_font(31, bold=True)
     font_role = _load_font(23, bold=False)
 
-    pill_box = [145, 180, 465, 234]
-    draw.rounded_rectangle(pill_box, radius=27, fill=(255, 255, 255, 38), outline=(255, 255, 255, 120), width=2)
-    draw.ellipse([167, 198, 185, 216], fill=(56, 189, 248, 255))
-    draw.text((200, 192), "AI / ML BRIEFING", font=font_pill, fill=(255, 255, 255, 250))
+    if not avatar_rendered:
+        draw.ellipse(
+            (avatar_x, avatar_y, avatar_x + avatar_size, avatar_y + avatar_size),
+            fill=(39, 39, 42, 255),
+            outline=(255, 255, 255, 140),
+            width=2
+        )
+        initials = "".join([part[0].upper() for part in author_name.split()[:2]]) or "SN"
+        draw.text(
+            (avatar_x + avatar_size // 2, avatar_y + avatar_size // 2),
+            initials,
+            font=font_author,
+            fill=(255, 255, 255, 255),
+            anchor="mm"
+        )
 
-    clean_title = headline if headline else "Next-Gen Breakthrough in Artificial Intelligence"
-    wrapped_lines = textwrap.wrap(clean_title, width=24)[:6]
+    # Author Name & AI/ML Engineer Subtitle with clean vertical separation
+    info_x = avatar_x + avatar_size + 26
+    name_y = avatar_y + 12
+    role_y = avatar_y + 52
 
-    y_cursor = 285
-    for line in wrapped_lines:
-        draw.text((147, y_cursor + 2), line, font=font_title, fill=(0, 0, 0, 95))
-        draw.text((145, y_cursor), line, font=font_title, fill=(255, 255, 255, 252))
-        y_cursor += 70
+    draw.text((info_x, name_y), author_name, font=font_author, fill=(255, 255, 255, 255))
+    draw.text((info_x, role_y), author_role, font=font_role, fill=(161, 161, 170, 245))
 
-    source_y = max(y_cursor + 20, 720)
-    draw.rounded_rectangle([145, source_y, 215, source_y + 6], radius=3, fill=(56, 189, 248, 230))
-    draw.text((145, source_y + 22), f"SOURCE  •  {source.upper()[:36]}", font=font_source, fill=(225, 232, 240, 220))
+    # Save 1080x1080 JPEG and return forward-slash normalized path
+    timestamp = int(time.time() * 1000)
+    filename = f"card_{timestamp}.jpg"
+    rel_path = f"{OUTPUT_DIR}/{filename}"
 
-    draw.line([(145, 815), (935, 815)], fill=(255, 255, 255, 50), width=2)
-
-    final_img = Image.alpha_composite(base_img, overlay)
-    final_draw = ImageDraw.Draw(final_img)
-
-    _paste_circular_avatar(final_img, final_draw, x=145, y=840, size=72)
-
-    final_draw.text((235, 845), "Shehan Nadeesha", font=font_brand, fill=(255, 255, 255, 250))
-    final_draw.text((235, 882), "AI/ML Engineer", font=font_role, fill=(195, 210, 230, 215))
-
-    final_img.convert("RGB").save(image_path, "JPEG", quality=95)
-    print(f"✅ Liquid Glass image saved to {image_path}")
-    return str(image_path)
+    final_rgb = bg_rgba.convert("RGB")
+    final_rgb.save(rel_path, "JPEG", quality=95, optimize=True)
+    print(f"Generated clean 1080x1080 Liquid Glass card: {rel_path}")
+    return rel_path
 
 
-def run_agent_workflow() -> dict:
-    """Execute the full pipeline: fetch fresh unseen news, write post, and render image."""
-    news = fetch_latest_tech_news()
-    content = generate_linkedin_post(news)
-    image_path = generate_creative_image(
-        content["image_prompt"],
-        headline=news["title"],
-        source=news["source"]
+def run_agent_workflow() -> Dict[str, Any]:
+    """
+    Execute the complete autonomous pipeline:
+    1. Discover latest unseen 24h AI/ML news
+    2. Synthesize LinkedIn engineering commentary
+    3. Render 1080x1080 iOS Liquid Glass card
+    4. Persist draft to SQLite history and return normalized payload
+    """
+    news_item = fetch_latest_tech_news()
+    post_text = generate_linkedin_post(news_item)
+    image_path = generate_creative_image(news_item["title"], news_item["source"])
+
+    normalized_path = image_path.replace("\\", "/").lstrip("/")
+    image_url = f"/{normalized_path}?t={int(time.time())}"
+
+    post_id = save_post_record(
+        title=news_item["title"],
+        source=news_item["source"],
+        link=news_item["link"],
+        post_text=post_text,
+        image_url=image_url,
+        image_path=normalized_path,
+        status="draft"
     )
 
     return {
-        "news": news,
-        "post_text": content["post_text"],
-        "image_prompt": content["image_prompt"],
-        "image_path": image_path
+        "post_id": post_id,
+        "news": news_item,
+        "post_text": post_text,
+        "image_path": normalized_path,
+        "image_url": image_url,
+        "record_status": "draft"
     }

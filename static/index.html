@@ -18,7 +18,7 @@
             color-scheme: dark;
         }
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: #09090b;
             color: #fafafa;
             -webkit-tap-highlight-color: transparent;
@@ -30,11 +30,26 @@
             background-color: #111113;
             border: 1px solid #222226;
         }
-        .surface-elevated {
-            background-color: #18181b;
-            border: 1px solid #27272a;
+        /* Authentic LinkedIn Dark Mode Feed Card */
+        .linkedin-card {
+            background-color: #1b1f23;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 8px;
+            font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Fira Sans", Ubuntu, Oxygen, "Oxygen Sans", Cantarell, "Droid Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Lucida Grande", Helvetica, Arial, sans-serif;
         }
-        /* Slim minimal dark scrollbar */
+        .linkedin-text-primary {
+            color: rgba(255, 255, 255, 0.9);
+        }
+        .linkedin-text-secondary {
+            color: rgba(255, 255, 255, 0.6);
+        }
+        .linkedin-link {
+            color: #70b5f9;
+            font-weight: 500;
+        }
+        .linkedin-link:hover {
+            text-decoration: underline;
+        }
         ::-webkit-scrollbar {
             width: 5px;
             height: 5px;
@@ -49,13 +64,12 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #3f3f46;
         }
-        /* Native Dark Time Input Styling */
         input[type="time"] {
             color-scheme: dark;
         }
         input[type="time"]::-webkit-calendar-picker-indicator {
             filter: invert(0.75);
-             opacity: 0.7;
+            opacity: 0.7;
             cursor: pointer;
         }
         input[type="time"]::-webkit-calendar-picker-indicator:hover {
@@ -71,6 +85,7 @@
         .preview-body-text {
             overflow-wrap: anywhere;
             word-break: break-word;
+            line-height: 1.42857;
         }
     </style>
 </head>
@@ -101,7 +116,6 @@
 
             <!-- Right: Compact Stats Ribbon + API Mode + Auto-Pilot + Profile Trigger -->
             <div class="flex items-center gap-3">
-                <!-- Inline Telemetry Pill (Desktop) -->
                 <div class="hidden xl:flex items-center gap-3 bg-zinc-900/60 border border-zinc-800/80 rounded-lg px-3 py-1 text-xs">
                     <div class="flex items-center gap-1.5">
                         <span class="text-zinc-500">Published</span>
@@ -119,13 +133,11 @@
                     </div>
                 </div>
 
-                <!-- LinkedIn API Mode Pill -->
                 <button onclick="openProfileModal()" id="linkedinModePill" class="hidden sm:flex items-center gap-1.5 bg-zinc-900 hover:bg-zinc-800/80 border border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs transition" title="Configure LinkedIn API Access Token">
                     <span id="linkedinModeDot" class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
                     <span id="linkedinModeLabel" class="mono text-[10px] text-zinc-400">SANDBOX</span>
                 </button>
 
-                <!-- Auto-Pilot 4x/Day Scheduler Pill -->
                 <button onclick="openSchedulerModal()" class="flex items-center gap-2 bg-zinc-900 hover:bg-zinc-800/80 border border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs transition" title="Configure 4x/Day Peak-Time Auto-Pilot">
                     <span id="autoPilotDot" class="w-2 h-2 rounded-full bg-emerald-400"></span>
                     <span class="font-medium text-zinc-200 hidden sm:inline">Auto-Pilot</span>
@@ -138,7 +150,7 @@
                 </div>
 
                 <button onclick="openProfileModal()" class="flex items-center gap-2 bg-zinc-900 hover:bg-zinc-800/80 border border-zinc-800 rounded-lg px-2.5 py-1 transition group">
-                    <img id="navAvatarImg" src="/static/avatar.jpg" onerror="this.style.display='none'; document.getElementById('navAvatarFallback').style.display='flex';" class="w-5 h-5 rounded-full object-cover hidden">
+                    <img id="navAvatarImg" src="" alt="" class="w-5 h-5 rounded-full object-cover hidden">
                     <div id="navAvatarFallback" class="w-5 h-5 rounded-full bg-zinc-700 text-[10px] font-bold text-white flex items-center justify-center">SN</div>
                     <span id="navProfileName" class="text-xs font-medium text-zinc-300 group-hover:text-white hidden sm:inline">Shehan Nadeesha</span>
                 </button>
@@ -177,12 +189,12 @@
                         </button>
 
                         <button id="regenerateBtn" onclick="regenerateCurrentDraft()" disabled
-                            title="Re-synthesize post & card for this same article"
+                            title="Re-synthesize post & 1080x1080 Liquid Glass card for this article"
                             class="bg-zinc-900 hover:bg-zinc-800 disabled:opacity-40 disabled:pointer-events-none text-zinc-200 font-medium text-xs px-3.5 py-2.5 rounded-lg border border-zinc-800 transition flex items-center gap-1.5">
                             <svg id="regenerateIcon" class="w-3.5 h-3.5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                             </svg>
-                            <span>Redo</span>
+                            <span id="regenerateBtnText">Redo</span>
                         </button>
 
                         <button id="deleteDraftBtn" onclick="deleteCurrentStudioDraft()" disabled
@@ -215,7 +227,7 @@
                         </div>
                     </div>
 
-                    <textarea id="postEditor" rows="15" oninput="syncEditorToPreview()"
+                    <textarea id="postEditor" rows="16" oninput="syncEditorToPreview()"
                         class="w-full bg-[#09090b] text-zinc-100 text-[13px] leading-relaxed p-3.5 rounded-lg border border-zinc-800 focus:border-zinc-600 focus:outline-none resize-y mono"
                         placeholder="Click 'Fetch New Unseen News' or wait for your 4x/day Auto-Pilot schedule..."></textarea>
 
@@ -236,65 +248,142 @@
                 </div>
             </div>
 
-            <!-- Right Column: Real-Time LinkedIn Feed Preview (7 Cols) -->
+            <!-- Right Column: Authentic 1:1 LinkedIn Feed Preview (7 Cols) -->
             <div class="lg:col-span-7 flex flex-col">
                 <div class="surface rounded-xl p-5">
                     <div class="flex items-center justify-between mb-4">
                         <span class="text-xs font-medium text-zinc-300 uppercase tracking-wider mono">Live LinkedIn Feed Preview</span>
                         <div class="flex items-center gap-3">
                             <a id="downloadCardBtn" href="#" download="linkedin-card.jpg" class="hidden text-xs text-zinc-300 hover:text-white transition">Download 1080×1080 Card ↓</a>
-                            <span class="text-[11px] mono text-zinc-400">iOS Liquid Glass</span>
+                            <span class="text-[11px] mono text-zinc-400">1:1 Desktop Feed</span>
                         </div>
                     </div>
 
-                    <!-- Simulated LinkedIn Feed Card -->
-                    <div class="bg-[#1b1f23] border border-zinc-800 rounded-xl overflow-hidden shadow-2xl max-w-[640px] mx-auto">
+                    <!-- Authentic LinkedIn Feed Column Container (555px standard LinkedIn width) -->
+                    <div class="linkedin-card max-w-[555px] mx-auto overflow-hidden shadow-2xl">
+
                         <!-- LinkedIn Author Header -->
-                        <div class="p-4 flex items-start justify-between">
-                            <div class="flex items-center gap-3">
-                                <div class="relative w-12 h-12 rounded-full overflow-hidden bg-zinc-800 border border-zinc-700 flex items-center justify-center shrink-0">
-                                    <img id="previewAvatarImg" src="/static/avatar.jpg" onerror="this.style.display='none'; document.getElementById('previewAvatarFallback').style.display='flex';" class="w-full h-full object-cover">
-                                    <div id="previewAvatarFallback" class="w-full h-full bg-zinc-700 text-zinc-100 font-bold text-sm items-center justify-center hidden">
+                        <div class="px-4 pt-3 pb-2 flex items-start justify-between">
+                            <div class="flex items-start gap-2.5">
+                                <a id="previewAvatarLink" href="https://www.linkedin.com/in/shehan-nadeesha/" target="_blank" class="relative w-12 h-12 rounded-full overflow-hidden bg-zinc-800 flex items-center justify-center shrink-0 mt-0.5">
+                                    <img id="previewAvatarImg" src="" alt="" class="w-full h-full object-cover hidden">
+                                    <div id="previewAvatarFallback" class="w-full h-full bg-zinc-700 text-zinc-100 font-bold text-sm flex items-center justify-center">
                                         SN
                                     </div>
-                                </div>
-                                <div>
-                                    <div class="flex items-center gap-1.5">
-                                        <a id="previewProfileLink" href="https://www.linkedin.com/in/shehan-nadeesha/" target="_blank" class="font-semibold text-sm text-white hover:underline">Shehan Nadeesha</a>
-                                        <span class="text-xs text-zinc-400">• 1st</span>
+                                </a>
+                                <div class="leading-tight">
+                                    <div class="flex items-center gap-1">
+                                        <a id="previewProfileLink" href="https://www.linkedin.com/in/shehan-nadeesha/" target="_blank" class="font-semibold text-[14px] linkedin-text-primary hover:text-[#70b5f9] hover:underline">Shehan Nadeesha</a>
+                                        <span class="text-[12px] linkedin-text-secondary">• 1st</span>
                                     </div>
-                                    <p id="previewHeadline" class="text-xs text-zinc-300">AI/ML Engineer</p>
-                                    <p class="text-[11px] text-zinc-400 flex items-center gap-1 mt-0.5">
-                                        <span>Just now</span> • <span>🌐</span>
-                                    </p>
+                                    <p id="previewHeadline" class="text-[12px] linkedin-text-secondary mt-0.5">AI/ML Engineer</p>
+                                    <div class="text-[12px] linkedin-text-secondary flex items-center gap-1 mt-0.5">
+                                        <span>1m</span>
+                                        <span>•</span>
+                                        <!-- Official LinkedIn Globe SVG -->
+                                        <svg class="w-3.5 h-3.5 fill-current opacity-80" viewBox="0 0 16 16">
+                                            <path d="M8 1a7 7 0 107 7 7 7 0 00-7-7zM3 8a5 5 0 011-3l.55.55A1.5 1.5 0 015 6.62v1.07a.75.75 0 00.22.53l.56.56a.75.75 0 00.53.22H7v.69a.75.75 0 00.22.53l.56.56a.75.75 0 01.22.53V13a5 5 0 01-5-5zm6.24 4.83l2-2.46a.75.75 0 00.09-.8l-.58-1.16A.76.76 0 0010 8H7v-.19a.51.51 0 01.28-.45l.38-.19a.74.74 0 01.68 0L9 7.5l.38-.7a1 1 0 00.12-.48v-.85a.78.78 0 01.21-.53l1.07-1.09a5 5 0 01-1.54 9z"/>
+                                        </svg>
+                                    </div>
                                 </div>
                             </div>
-                            <button onclick="openProfileModal()" class="text-xs text-zinc-400 hover:text-zinc-200 px-2 py-1 rounded hover:bg-zinc-800 transition">Edit Profile</button>
+
+                            <!-- LinkedIn Top-Right Three Dots & Edit Trigger -->
+                            <div class="flex items-center gap-1">
+                                <button onclick="openProfileModal()" title="Edit Author Profile" class="linkedin-text-secondary hover:text-white p-1.5 rounded-full hover:bg-white/10 transition">
+                                    <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                                        <path d="M14 12a2 2 0 11-4 0 2 2 0 014 0zM4 12a2 2 0 11-4 0 2 2 0 014 0zm16 0a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
 
-                        <!-- LinkedIn Post Text Preview -->
+                        <!-- LinkedIn Post Commentary Body -->
                         <div class="px-4 pb-3">
-                            <div id="linkedinPreviewText" class="preview-body-text text-[13.5px] text-zinc-100 whitespace-pre-line leading-relaxed">Your generated LinkedIn post will render here in real time as you type or generate...</div>
-                            <button id="previewToggleMoreBtn" onclick="togglePreviewExpand()" class="hidden mt-1 text-xs font-medium text-zinc-400 hover:text-zinc-200 transition">
-                                …see more
+                            <div id="linkedinPreviewText" class="preview-body-text text-[14px] linkedin-text-primary whitespace-pre-line">Your generated LinkedIn post will render here in real time...</div>
+                            <button id="previewToggleMoreBtn" onclick="togglePreviewExpand()" class="hidden mt-0.5 text-[14px] font-medium linkedin-text-secondary hover:text-[#70b5f9] hover:underline transition">
+                                …more
                             </button>
                         </div>
 
-                        <!-- Generated 1080x1080 Visual Card -->
-                        <div class="relative aspect-square w-full bg-zinc-950 border-y border-zinc-800/80 flex items-center justify-center overflow-hidden">
-                            <div id="imagePlaceholder" class="text-center p-6">
-                                <p class="text-xs text-zinc-400 mono">1080 × 1080 Liquid Glass Visual</p>
+                        <!-- 1080x1080 Media Container -->
+                        <div class="relative aspect-square w-full bg-[#111317] border-y border-white/10 flex items-center justify-center overflow-hidden">
+                            <!-- Loading Spinner Overlay during Generate / Redo -->
+                            <div id="cardLoadingOverlay" class="hidden absolute inset-0 z-10 bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center gap-2.5">
+                                <svg class="w-6 h-6 text-zinc-200 animate-spin" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"></circle>
+                                    <path class="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                                </svg>
+                                <span class="text-xs mono text-zinc-200">Rendering 1080×1080 Liquid Glass Card...</span>
                             </div>
-                            <img id="generatedImage" src="" alt="Generated Visual" class="hidden w-full h-full object-cover">
+
+                            <div id="imagePlaceholder" class="text-center p-6 flex flex-col items-center gap-2">
+                                <p id="imagePlaceholderText" class="text-xs text-zinc-400 mono">1080 × 1080 Liquid Glass Visual</p>
+                                <button id="rebuildImageBtn" onclick="regenerateCurrentDraft()" class="hidden mt-1 text-xs bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border border-zinc-700 px-3 py-1.5 rounded-lg transition">
+                                    Generate Visual Card
+                                </button>
+                            </div>
+
+                            <img id="generatedImage" src="" alt="Generated Visual"
+                                onload="handleCardImageLoaded()"
+                                onerror="handleCardImageError()"
+                                class="hidden w-full h-full object-cover">
                         </div>
 
-                        <!-- LinkedIn Social Engagement Footer -->
-                        <div class="px-4 py-2.5 bg-[#1b1f23] flex items-center justify-between text-xs text-zinc-400">
-                            <span class="hover:text-zinc-200 cursor-default">Like</span>
-                            <span class="hover:text-zinc-200 cursor-default">Comment</span>
-                            <span class="hover:text-zinc-200 cursor-default">Repost</span>
-                            <span class="hover:text-zinc-200 cursor-default">Send</span>
+                        <!-- Authentic LinkedIn Social Reactions Summary Row -->
+                        <div class="px-4 py-2 flex items-center justify-between text-[12px] linkedin-text-secondary border-b border-white/10">
+                            <div class="flex items-center gap-1.5">
+                                <div class="flex items-center -space-x-1">
+                                    <!-- Like Badge -->
+                                    <span class="w-4 h-4 rounded-full bg-[#378fe9] flex items-center justify-center ring-1 ring-[#1b1f23]">
+                                        <svg class="w-2.5 h-2.5 fill-white" viewBox="0 0 16 16"><path d="M11.97 6.5H8.8l.46-2.29A1.75 1.75 0 007.54 2h-.18a.75.75 0 00-.67.41L4.5 6.82V13.5h6.72a1.5 1.5 0 001.47-1.2l.82-4.1A1.44 1.44 0 0011.97 6.5zM2 7.5h1.5v6H2z"/></svg>
+                                    </span>
+                                    <!-- Insightful Badge -->
+                                    <span class="w-4 h-4 rounded-full bg-[#f5bb5c] flex items-center justify-center ring-1 ring-[#1b1f23]">
+                                        <svg class="w-2.5 h-2.5 fill-zinc-950" viewBox="0 0 16 16"><path d="M8 2a4.5 4.5 0 00-2.5 8.24V12a1 1 0 001 1h3a1 1 0 001-1v-1.76A4.5 4.5 0 008 2zm1 12H7v1h2v-1z"/></svg>
+                                    </span>
+                                    <!-- Support/Clap Badge -->
+                                    <span class="w-4 h-4 rounded-full bg-[#6dae4f] flex items-center justify-center ring-1 ring-[#1b1f23]">
+                                        <svg class="w-2.5 h-2.5 fill-white" viewBox="0 0 16 16"><path d="M8 13.5A5.5 5.5 0 102.5 8 5.5 5.5 0 008 13.5z"/></svg>
+                                    </span>
+                                </div>
+                                <span class="hover:text-[#70b5f9] hover:underline cursor-default">48</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="hover:text-[#70b5f9] hover:underline cursor-default">9 comments</span>
+                                <span>•</span>
+                                <span class="hover:text-[#70b5f9] hover:underline cursor-default">4 reposts</span>
+                            </div>
                         </div>
+
+                        <!-- Authentic LinkedIn 4-Button Action Bar -->
+                        <div class="px-2 py-1 grid grid-cols-4 gap-1 text-[14px] font-semibold linkedin-text-secondary">
+                            <button type="button" class="flex items-center justify-center gap-1.5 py-2.5 rounded hover:bg-white/10 hover:text-white transition">
+                                <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                                    <path d="M19.46 11l-3.91-3.91a7 7 0 01-1.69-2.74l-.49-1.47A2.76 2.76 0 0010.76 1 2.75 2.75 0 008 3.74v1.12a9.19 9.19 0 00.46 2.85L8.89 9H4.12A2.12 2.12 0 002 11.12a2.16 2.16 0 00.92 1.76A2.11 2.11 0 002 14.62a2.14 2.14 0 001.28 2 2 2 0 00-.28 1 2.12 2.12 0 002 2.12v.14A2.12 2.12 0 007.12 22h7.49a8.08 8.08 0 003.58-.84l.31-.16H21V11zM19 19h-1l-.73.37a6.14 6.14 0 01-2.69.63H7.72a1 1 0 01-1-.72l-.25-.87-.85-.41A1 1 0 015 17l.17-1-.76-.74A1 1 0 014.27 14l.66-1.09-.73-1.1a.49.49 0 01.08-.7.48.48 0 01.34-.11h7.05l-1.31-3.92A7 7 0 0110 4.86V3.75a.77.77 0 01.75-.75.75.75 0 01.71.51L12 5a9 9 0 002.13 3.5l4.5 4.5H19z"/>
+                                </svg>
+                                <span>Like</span>
+                            </button>
+                            <button type="button" class="flex items-center justify-center gap-1.5 py-2.5 rounded hover:bg-white/10 hover:text-white transition">
+                                <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                                    <path d="M7 9h10v1H7zm0 4h7v-1H7zm16-2a6.78 6.78 0 01-2.84 5.61L12 22v-4H8A7 7 0 018 4h8a7 7 0 017 7zm-2 0a5 5 0 00-5-5H8a5 5 0 000 10h6v2.28L19 15a4.79 4.79 0 002-4z"/>
+                                </svg>
+                                <span>Comment</span>
+                            </button>
+                            <button type="button" class="flex items-center justify-center gap-1.5 py-2.5 rounded hover:bg-white/10 hover:text-white transition">
+                                <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                                    <path d="M13.96 5H6c-.55 0-1 .45-1 1v10H3V6c0-1.66 1.34-3 3-3h7.96L12 1l1.41-1.41L17.83 4l-4.42 4.41L12 7l1.96-2zm-3.92 14H18c.55 0 1-.45 1-1V8h2v10c0 1.66-1.34 3-3 3h-7.96L12 23l-1.41 1.41L6.17 20l4.42-4.41L12 17l-1.96 2z"/>
+                                </svg>
+                                <span>Repost</span>
+                            </button>
+                            <button type="button" class="flex items-center justify-center gap-1.5 py-2.5 rounded hover:bg-white/10 hover:text-white transition">
+                                <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                                    <path d="M21 3L0 10l7.66 4.26L16 8l-6.26 8.34L14 24l7-21z"/>
+                                </svg>
+                                <span>Send</span>
+                            </button>
+                        </div>
+
                     </div>
                 </div>
             </div>
@@ -303,7 +392,6 @@
         <!-- ==================== VIEW 2: POST ARCHIVE & HISTORY ==================== -->
         <div id="historyView" class="hidden">
             <div class="surface rounded-xl p-6">
-                <!-- Archive Header & Filter Controls -->
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-zinc-800/80">
                     <div>
                         <h2 class="text-base font-semibold text-zinc-100">Post Archive & Deduplication Log</h2>
@@ -311,7 +399,6 @@
                     </div>
 
                     <div class="flex flex-wrap items-center gap-2.5">
-                        <!-- Filter Pill Group -->
                         <div class="flex items-center bg-zinc-900 p-1 rounded-lg border border-zinc-800">
                             <button id="filterAllBtn" onclick="setHistoryFilter('all')" class="px-3 py-1 rounded-md text-xs font-medium transition bg-zinc-800 text-zinc-100">
                                 All Posts
@@ -324,11 +411,9 @@
                             </button>
                         </div>
 
-                        <!-- Search Input -->
                         <input id="historySearchInput" type="text" oninput="renderFilteredHistory()" placeholder="Search headline or source..."
                             class="bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs text-zinc-100 focus:border-zinc-600 focus:outline-none w-48 sm:w-60">
 
-                        <!-- Bulk Clear Drafts Button -->
                         <button id="clearAllDraftsBtn" onclick="clearAllDrafts()"
                             class="bg-zinc-900 hover:bg-red-950/50 hover:border-red-900/60 hover:text-red-300 text-zinc-300 text-xs font-medium px-3 py-1.5 rounded-lg border border-zinc-800 transition flex items-center gap-1.5">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -339,7 +424,6 @@
                     </div>
                 </div>
 
-                <!-- Archive Grid -->
                 <div id="historyList" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mt-5">
                     <p class="text-xs text-zinc-400 py-8 text-center col-span-full">No posts recorded yet.</p>
                 </div>
@@ -351,7 +435,6 @@
     <!-- ==================== MODAL 1: 4x/DAY AUTO-PILOT SCHEDULER ==================== -->
     <div id="schedulerModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4">
         <div class="bg-[#111113] border border-zinc-800 rounded-xl max-w-lg w-full p-6 shadow-2xl">
-            <!-- Modal Header -->
             <div class="flex items-start justify-between pb-4 border-b border-zinc-800/80">
                 <div>
                     <div class="flex items-center gap-2">
@@ -368,7 +451,6 @@
             </div>
 
             <div class="space-y-4 mt-4">
-                <!-- Row 1: Recurring Auto-Pilot Toggle Switch -->
                 <div class="flex items-center justify-between bg-[#09090b] border border-zinc-800/90 rounded-lg px-4 py-3">
                     <div>
                         <p class="text-xs font-medium text-zinc-200">Autonomous Daily Execution</p>
@@ -380,7 +462,6 @@
                     </label>
                 </div>
 
-                <!-- Row 2: 4 Peak LinkedIn Time Slots -->
                 <div>
                     <div class="flex items-center justify-between mb-2">
                         <label class="text-[11px] font-medium text-zinc-400 uppercase tracking-wider mono">Execution Windows (4x / Day)</label>
@@ -418,7 +499,6 @@
                     </div>
                 </div>
 
-                <!-- Row 3: Push Notification Channels -->
                 <div class="bg-[#09090b] border border-zinc-800/90 rounded-lg p-3.5 space-y-3">
                     <div class="flex items-center justify-between">
                         <div>
@@ -441,7 +521,6 @@
                     </div>
                 </div>
 
-                <!-- Footer Actions -->
                 <div class="pt-2 flex items-center justify-between gap-2">
                     <button onclick="sendTestAlert()" class="bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs font-medium px-3.5 py-2 rounded-lg border border-zinc-800 transition">
                         Dispatch Test Ping
@@ -472,7 +551,6 @@
                 </button>
             </div>
 
-            <!-- Section 1: Author Branding -->
             <form onsubmit="saveProfile(event)" class="space-y-4 mt-4">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
@@ -503,12 +581,11 @@
                 </div>
             </form>
 
-            <!-- Section 2: Official LinkedIn Direct Publishing API -->
             <div class="mt-6 pt-5 border-t border-zinc-800/80 space-y-3">
                 <div class="flex items-center justify-between">
                     <div>
                         <h4 class="text-xs font-semibold text-zinc-200">Official LinkedIn Direct Publishing API</h4>
-                        <p class="text-[11px] text-zinc-500 mt-0.5">OAuth 2.0 Access Token (`openid`, `profile`, `w_member_social`)</p>
+                        <p class="text-[11px] text-zinc-500 mt-0.5">OAuth 2.0 Access Token (openid, profile, w_member_social)</p>
                     </div>
                     <span id="modalLinkedinStatusBadge" class="mono text-[10px] px-2 py-0.5 rounded bg-zinc-900 text-zinc-400 border border-zinc-800">
                         SANDBOX
@@ -545,7 +622,7 @@
         let isPreviewExpanded = false;
         let lastSeenSlotTrigger = null;
         let linkedinConnected = false;
-        const PREVIEW_CHAR_LIMIT = 260;
+        const PREVIEW_CHAR_LIMIT = 240;
 
         window.addEventListener('DOMContentLoaded', async () => {
             registerServiceWorker();
@@ -557,9 +634,49 @@
             await loadExistingDraft();
             await loadHistory();
 
-            // Poll scheduler status every 20 seconds so autonomous background runs trigger desktop/PWA notifications
             setInterval(pollSchedulerForUpdates, 20000);
         });
+
+        function normalizeImageUrl(rawUrl, rawPath) {
+            let candidate = (rawUrl || rawPath || '').trim();
+            if (!candidate) return '';
+            candidate = candidate.replace(/\\/g, '/');
+            if (!candidate.startsWith('/') && !candidate.startsWith('http')) {
+                candidate = '/' + candidate;
+            }
+            return candidate;
+        }
+
+        function handleCardImageLoaded() {
+            document.getElementById('generatedImage').classList.remove('hidden');
+            document.getElementById('imagePlaceholder').classList.add('hidden');
+            document.getElementById('cardLoadingOverlay').classList.add('hidden');
+        }
+
+        function handleCardImageError() {
+            document.getElementById('generatedImage').classList.add('hidden');
+            document.getElementById('cardLoadingOverlay').classList.add('hidden');
+            const placeholder = document.getElementById('imagePlaceholder');
+            const placeholderText = document.getElementById('imagePlaceholderText');
+            const rebuildBtn = document.getElementById('rebuildImageBtn');
+
+            placeholder.classList.remove('hidden');
+            if (currentDraftData && currentDraftData.news) {
+                placeholderText.textContent = 'Click Redo to render a fresh 1080×1080 card';
+                rebuildBtn.classList.remove('hidden');
+            } else {
+                placeholderText.textContent = '1080 × 1080 Liquid Glass Visual';
+                rebuildBtn.classList.add('hidden');
+            }
+        }
+
+        function formatLinkedInRichText(rawText) {
+            const escaped = escapeHtmlText(rawText);
+            // Highlight URLs and #Hashtags in authentic LinkedIn blue (#70b5f9)
+            return escaped
+                .replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" class="linkedin-link">$1</a>')
+                .replace(/(^|\s)(#[a-zA-Z0-9_]+)/g, '$1<span class="linkedin-link cursor-pointer">$2</span>');
+        }
 
         async function loadAppMeta() {
             try {
@@ -768,7 +885,7 @@
                     }
                 }
             } catch (e) {
-                // Silent background poll
+                // Silent poll
             }
         }
 
@@ -876,22 +993,32 @@
             document.getElementById('navProfileName').textContent = profile.name;
             document.getElementById('previewProfileLink').textContent = profile.name;
             document.getElementById('previewProfileLink').href = profile.linkedin_url;
+            document.getElementById('previewAvatarLink').href = profile.linkedin_url;
             document.getElementById('previewHeadline').textContent = profile.headline;
 
             document.getElementById('inputProfileName').value = profile.name;
             document.getElementById('inputProfileHeadline').value = profile.headline;
             document.getElementById('inputProfileUrl').value = profile.linkedin_url;
 
+            const navImg = document.getElementById('navAvatarImg');
+            const prevImg = document.getElementById('previewAvatarImg');
+            const navFallback = document.getElementById('navAvatarFallback');
+            const prevFallback = document.getElementById('previewAvatarFallback');
+
             if (hasAvatar) {
-                const avatarSrc = profile.avatar_url || ('/static/avatar.jpg?t=' + Date.now());
-                const navImg = document.getElementById('navAvatarImg');
-                const prevImg = document.getElementById('previewAvatarImg');
+                const avatarSrc = '/static/avatar.jpg?t=' + Date.now();
                 navImg.src = avatarSrc;
-                navImg.style.display = 'block';
-                document.getElementById('navAvatarFallback').style.display = 'none';
+                navImg.classList.remove('hidden');
+                navFallback.classList.add('hidden');
+
                 prevImg.src = avatarSrc;
-                prevImg.style.display = 'block';
-                document.getElementById('previewAvatarFallback').style.display = 'none';
+                prevImg.classList.remove('hidden');
+                prevFallback.classList.add('hidden');
+            } else {
+                navImg.classList.add('hidden');
+                navFallback.classList.remove('hidden');
+                prevImg.classList.add('hidden');
+                prevFallback.classList.remove('hidden');
             }
         }
 
@@ -924,8 +1051,9 @@
                 const res = await fetch('/api/profile', { method: 'POST', body: formData });
                 const data = await res.json();
                 if (data.status === 'success') {
-                    applyProfileToUI(data.profile, true);
-                    showToast('Author identity saved');
+                    await loadProfile();
+                    closeProfileModal();
+                    showToast('Author identity saved! Click Redo to refresh the card.');
                 }
             } catch (err) {
                 showToast('Failed to update profile', true);
@@ -956,6 +1084,8 @@
             document.getElementById('newsSourceBox').classList.add('hidden');
             document.getElementById('generatedImage').classList.add('hidden');
             document.getElementById('imagePlaceholder').classList.remove('hidden');
+            document.getElementById('imagePlaceholderText').textContent = '1080 × 1080 Liquid Glass Visual';
+            document.getElementById('rebuildImageBtn').classList.add('hidden');
             document.getElementById('downloadCardBtn').classList.add('hidden');
             document.getElementById('currentDraftStatusBadge').classList.add('hidden');
             document.getElementById('regenerateBtn').disabled = true;
@@ -991,6 +1121,15 @@
             renderFilteredHistory();
         }
 
+        function escapeHtmlText(str) {
+            return String(str || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
         function renderFilteredHistory() {
             const container = document.getElementById('historyList');
             const query = (document.getElementById('historySearchInput')?.value || '').toLowerCase().trim();
@@ -1016,28 +1155,31 @@
                     : 'bg-zinc-800/90 text-zinc-300 border-zinc-700';
                 const badgeLabel = isPub ? (isSimulated ? 'SANDBOX PUB' : 'LIVE PUBLISHED') : 'DRAFT';
                 const dateStr = new Date(item.created_at).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-                const safeTitle = (item.title || '').replace(/"/g, '&quot;');
+                const safeTitle = escapeHtmlText(item.title);
+                const safeSource = escapeHtmlText(item.source);
+                const imgUrl = normalizeImageUrl(item.image_url, item.image_path);
 
                 return `
                     <div class="bg-[#09090b] border border-zinc-800/90 hover:border-zinc-700 rounded-xl p-4 flex flex-col justify-between gap-3 transition group">
                         <div class="flex items-start gap-3.5">
-                            <img src="${item.image_url}" onclick='loadItemIntoStudio(${JSON.stringify(item).replace(/'/g, "&#39;")})'
-                                class="w-20 h-20 rounded-lg object-cover border border-zinc-800 shrink-0 bg-zinc-900 cursor-pointer hover:opacity-90 transition">
+                            <div onclick="openHistoryItemById(${item.id})" class="w-20 h-20 rounded-lg overflow-hidden border border-zinc-800 shrink-0 bg-zinc-900 cursor-pointer hover:opacity-90 transition flex items-center justify-center">
+                                <img src="${imgUrl}" alt="" onerror="this.style.display='none'" class="w-full h-full object-cover">
+                            </div>
                             <div class="min-w-0 flex-1">
                                 <div class="flex items-center justify-between gap-2 mb-1.5">
                                     <span class="mono text-[10px] px-2 py-0.5 rounded border ${badgeClass}">${badgeLabel}</span>
                                     <span class="mono text-[10px] text-zinc-400">${dateStr}</span>
                                 </div>
-                                <p onclick='loadItemIntoStudio(${JSON.stringify(item).replace(/'/g, "&#39;")})'
+                                <p onclick="openHistoryItemById(${item.id})"
                                     class="text-xs font-medium text-zinc-100 line-clamp-2 leading-snug cursor-pointer hover:text-white" title="${safeTitle}">
-                                    ${item.title}
+                                    ${safeTitle}
                                 </p>
-                                <span class="text-[11px] text-zinc-400 mt-1 block">${item.source}</span>
+                                <span class="text-[11px] text-zinc-400 mt-1 block">${safeSource}</span>
                             </div>
                         </div>
 
                         <div class="pt-3 border-t border-zinc-800/60 flex items-center justify-between gap-2">
-                            <button onclick='loadItemIntoStudio(${JSON.stringify(item).replace(/'/g, "&#39;")})'
+                            <button onclick="openHistoryItemById(${item.id})"
                                 class="text-xs font-medium text-zinc-300 hover:text-white bg-zinc-900 hover:bg-zinc-800 px-3 py-1.5 rounded-lg border border-zinc-800 transition">
                                 Open in Studio
                             </button>
@@ -1051,7 +1193,9 @@
             }).join('');
         }
 
-        function loadItemIntoStudio(item) {
+        function openHistoryItemById(postId) {
+            const item = fullHistoryItems.find(x => x.id === postId);
+            if (!item) return;
             renderDraft({
                 post_id: item.id,
                 news: {
@@ -1143,23 +1287,26 @@
             const btn = document.getElementById('generateBtn');
             const btnText = document.getElementById('generateBtnText');
             const icon = document.getElementById('generateIcon');
+            const overlay = document.getElementById('cardLoadingOverlay');
 
             btn.disabled = true;
-            btnText.textContent = 'Scanning 24h AI Feeds...';
+            btnText.textContent = 'Synthesizing Post & 1080×1080 Card...';
             icon.classList.add('animate-spin');
+            overlay.classList.remove('hidden');
             setAgentStatus('WORKING', 'bg-amber-400 animate-SubtlePulse');
 
             try {
                 const res = await fetch('/api/generate', { method: 'POST' });
                 const json = await res.json();
-                if (!res.ok) throw new Error(json.detail || 'Generation failed');
+                if (!res.ok) throw new Error(typeof json.detail === 'string' ? json.detail : 'Generation failed');
 
                 renderDraft(json.data);
                 if (json.stats) updateStatsRibbon(json.stats);
                 await loadHistory();
                 setAgentStatus('READY', 'bg-emerald-400');
-                showToast('Fresh unseen AI/ML news synthesized');
+                showToast('Fresh AI/ML post & Liquid Glass card generated');
             } catch (err) {
+                overlay.classList.add('hidden');
                 setAgentStatus('ERROR', 'bg-red-500');
                 showToast(err.message, true);
             } finally {
@@ -1170,39 +1317,49 @@
         }
 
         async function regenerateCurrentDraft() {
-            if (!currentDraftData || !currentDraftData.news) return;
-
             const btn = document.getElementById('regenerateBtn');
+            const btnText = document.getElementById('regenerateBtnText');
             const icon = document.getElementById('regenerateIcon');
+            const overlay = document.getElementById('cardLoadingOverlay');
+
             btn.disabled = true;
+            btnText.textContent = 'Redoing...';
             icon.classList.add('animate-spin');
+            overlay.classList.remove('hidden');
             setAgentStatus('RE-SYNTHESIZING', 'bg-amber-400 animate-SubtlePulse');
+
+            const newsObj = (currentDraftData && currentDraftData.news) ? currentDraftData.news : {};
 
             try {
                 const res = await fetch('/api/regenerate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        post_id: currentPostId,
-                        title: currentDraftData.news.title,
-                        link: currentDraftData.news.link,
-                        source: currentDraftData.news.source,
-                        summary: currentDraftData.news.summary || ''
+                        post_id: currentPostId || null,
+                        title: newsObj.title || '',
+                        link: newsObj.link || '',
+                        source: newsObj.source || 'AI News',
+                        summary: newsObj.summary || ''
                     })
                 });
                 const json = await res.json();
-                if (!res.ok) throw new Error(json.detail || 'Regeneration failed');
+                if (!res.ok) {
+                    const errMsg = typeof json.detail === 'string' ? json.detail : 'Regeneration failed';
+                    throw new Error(errMsg);
+                }
 
                 renderDraft(json.data);
                 if (json.stats) updateStatsRibbon(json.stats);
                 await loadHistory();
                 setAgentStatus('READY', 'bg-emerald-400');
-                showToast('Post & Liquid Glass visual regenerated');
+                showToast('Post & clean 1080×1080 Liquid Glass card regenerated');
             } catch (err) {
+                overlay.classList.add('hidden');
                 setAgentStatus('ERROR', 'bg-red-500');
                 showToast(err.message, true);
             } finally {
                 btn.disabled = false;
+                btnText.textContent = 'Redo';
                 icon.classList.remove('animate-spin');
             }
         }
@@ -1236,15 +1393,21 @@
             editor.value = data.post_text || '';
             syncEditorToPreview();
 
-            if (data.image_url) {
-                const img = document.getElementById('generatedImage');
-                const placeholder = document.getElementById('imagePlaceholder');
-                const dlBtn = document.getElementById('downloadCardBtn');
-                img.src = data.image_url;
-                img.classList.remove('hidden');
-                placeholder.classList.add('hidden');
-                dlBtn.href = data.image_url;
+            const resolvedImgUrl = normalizeImageUrl(data.image_url, data.image_path);
+            const img = document.getElementById('generatedImage');
+            const dlBtn = document.getElementById('downloadCardBtn');
+
+            if (resolvedImgUrl) {
+                // Force cache-busting reload on image element
+                const cacheBusted = resolvedImgUrl.includes('?')
+                    ? `${resolvedImgUrl}&_r=${Date.now()}`
+                    : `${resolvedImgUrl}?_r=${Date.now()}`;
+                img.src = cacheBusted;
+                dlBtn.href = cacheBusted;
                 dlBtn.classList.remove('hidden');
+            } else {
+                handleCardImageError();
+                dlBtn.classList.add('hidden');
             }
         }
 
@@ -1262,15 +1425,16 @@
             }
 
             if (text.length > PREVIEW_CHAR_LIMIT && !isPreviewExpanded) {
-                previewEl.textContent = text.slice(0, PREVIEW_CHAR_LIMIT).trimEnd() + '…';
-                toggleBtn.textContent = '…see more';
+                const shortText = text.slice(0, PREVIEW_CHAR_LIMIT).trimEnd() + '…';
+                previewEl.innerHTML = formatLinkedInRichText(shortText);
+                toggleBtn.textContent = '…more';
                 toggleBtn.classList.remove('hidden');
             } else if (text.length > PREVIEW_CHAR_LIMIT && isPreviewExpanded) {
-                previewEl.textContent = text;
-                toggleBtn.textContent = 'see less';
+                previewEl.innerHTML = formatLinkedInRichText(text);
+                toggleBtn.textContent = 'show less';
                 toggleBtn.classList.remove('hidden');
             } else {
-                previewEl.textContent = text;
+                previewEl.innerHTML = formatLinkedInRichText(text);
                 toggleBtn.classList.add('hidden');
             }
         }
