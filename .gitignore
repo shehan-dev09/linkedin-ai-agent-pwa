@@ -11,3 +11,6 @@ static/generated_images/*.jpg
 #profile data
 static/avatar.jpg
 static/profile.json
+
+#DB Avoid
+static/agent_history.db
