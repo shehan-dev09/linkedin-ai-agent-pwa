@@ -1,0 +1,9 @@
+# Virtual Environment
+venv/
+__pycache__/
+
+# Environment Variables (Secret Keys)
+.env
+
+# Generated Images
+static/generated_images/*.jpg
