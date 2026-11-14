@@ -15,7 +15,6 @@
   <i>An autonomous 24/7 background AI agent that curates real-time 24h AI/ML breakthroughs, writes technical LinkedIn commentary, renders 1080×1080 Apple iOS Liquid Glass cards, sends mobile lock-screen push alerts, and publishes directly to LinkedIn with one tap.</i>
 </p>
 
-[📘 Read the Full Engineering Case Study](./CASE_STUDY.md) • [🏗️ System Architecture](#-system-architecture--7-stage-pipeline) • [⚡ Quick Start (Simulation Mode)](#-quick-start-run-locally-in-simulation-mode)
 
 </div>
 
