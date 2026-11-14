@@ -30,7 +30,7 @@ Maintaining an active, high-signal technical presence on LinkedIn as an **AI/ML 
 1. **95% Autonomous Execution:** At 4 peak daily intervals (`08:30`, `12:30`, `17:30`, `21:00` SLT), the agent scrapes strictly the **last 24 hours of AI/ML news**, filters out any previously seen topics via SQLite, synthesizes an engineer-grade LinkedIn post, programmatically generates a **100% watermark-free `1080×1080` Apple iOS Liquid Glass visual card**, and pushes an alert to my iPhone lock screen.
 2. **5% Human Final Control:** Opening the mobile/desktop PWA displays a **1:1 authentic LinkedIn Dark Mode feed preview** where I can edit the caption, regenerate (`Redo`) the angle/visual, or tap **Approve & Publish** to push live via the **Official LinkedIn OAuth 2.0 API**.
 
-> 🔒 **Why the Live Cloud URL is Private:** Because the production cloud deployment is authenticated with my live personal `LINKEDIN_ACCESS_TOKEN` (`w_member_social` scope), it is protected behind a custom **SHA-256 HMAC Passcode Middleware**. Reviewers can inspect the [Engineering Case Study](./CASE_STUDY.md) or run the entire Studio locally in **Simulation Mode** in under 60 seconds.
+> 🔒 **Why the Live Cloud URL is Private:** Because the production cloud deployment is authenticated with my live personal `LINKEDIN_ACCESS_TOKEN` (`w_member_social` scope), it is protected behind a custom **SHA-256 HMAC Passcode Middleware**. Reviewers can run the entire Studio locally in **Simulation Mode** in under 60 seconds.
 
 ---
 
